@@ -81,15 +81,18 @@
         {% for event in all_events %}
           {% set attended = event.id in attended_ids %}
           {% set journaled = event.id in journaled_ids %}
+          {% set card_state = 'complete' if (attended and journaled) else ('checked-in' if attended else '') %}
           <div class="col-sm-6 col-lg-4">
-            <div class="event-status-card {{ 'attended' if attended else '' }}">
+            <div class="event-status-card {{ card_state }}">
 
               <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
                 <div style="font-weight:700;color:var(--navy);font-size:0.88rem;line-height:1.35;">
                   {{ event.title }}
                 </div>
-                {% if attended %}
-                  <span class="status-badge attended-badge flex-shrink-0">✓</span>
+                {% if attended and journaled %}
+                  <span class="status-badge complete-badge flex-shrink-0">✓</span>
+                {% elif attended %}
+                  <span class="status-badge checkedin-badge flex-shrink-0">Checked In</span>
                 {% endif %}
               </div>
 
@@ -101,13 +104,11 @@
               {% endif %}
 
               <div class="d-flex flex-wrap gap-2">
-                {% if attended %}
-                  {% if journaled %}
-                    <span class="btn-journal-done btn-sm">📝 Reflection done</span>
-                  {% else %}
-                    <a href="{{ url_for('student.new_journal', event_id=event.id) }}"
-                       class="btn btn-sm btn-lize">Write Reflection</a>
-                  {% endif %}
+                {% if attended and journaled %}
+                  <span class="btn-journal-done btn-sm">📝 Reflection done</span>
+                {% elif attended %}
+                  <a href="{{ url_for('student.new_journal', event_id=event.id) }}"
+                     class="btn btn-sm btn-lize">Write Reflection ✍️</a>
                 {% else %}
                   <a href="{{ url_for('student.checkin_qr', event_id=event.id) }}"
                      class="btn btn-sm btn-qr-show">Show My QR</a>

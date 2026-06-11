@@ -492,8 +492,9 @@ a:hover { color: var(--coral-dark); text-decoration: underline; }
   height: 100%;
   transition: box-shadow 0.2s, border-color 0.2s;
 }
-.event-status-card.attended { border-left-color: var(--success); }
-.event-status-card:hover    { box-shadow: 0 6px 24px rgba(27,45,94,0.15); }
+.event-status-card.checked-in { border-left-color: var(--gold); }
+.event-status-card.complete   { border-left-color: var(--success); }
+.event-status-card:hover      { box-shadow: 0 6px 24px rgba(27,45,94,0.15); }
 
 .status-badge {
   font-size: 0.68rem;
@@ -503,7 +504,8 @@ a:hover { color: var(--coral-dark); text-decoration: underline; }
   white-space: nowrap;
   flex-shrink: 0;
 }
-.attended-badge { background: #d4f8e4; color: #1a7840; }
+.checkedin-badge { background: #fff8e1; color: #8a6a00; }
+.complete-badge  { background: #d4f8e4; color: #1a7840; }
 
 .btn-qr-show {
   background: var(--navy);

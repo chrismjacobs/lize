@@ -8,13 +8,11 @@
 <!-- Already checked in — show static stamp -->
 <div class="checkin-bg">
   <div class="checkin-card text-center">
-    <div style="position:relative;width:160px;height:160px;margin:0 auto 1.5rem;">
-      <div class="stamp-ink stamp-static">
-        <div class="stamp-inner">
-          <div class="stamp-top">LI-ZE</div>
-          <div class="stamp-check">✓</div>
-          <div class="stamp-bottom">CHECKED IN</div>
-        </div>
+    <div class="stamp-ink stamp-static mb-4">
+      <div class="stamp-inner">
+        <div class="stamp-top">LI-ZE</div>
+        <div class="stamp-check">✓</div>
+        <div class="stamp-bottom">CHECKED IN</div>
       </div>
     </div>
     <h4 style="color:var(--navy);font-weight:700;margin-bottom:0.25rem;">You're checked in!</h4>
@@ -22,7 +20,7 @@
     <div class="d-flex gap-2 justify-content-center mt-3 flex-wrap">
       <a href="{{ url_for('student.new_journal', event_id=event.id) }}"
          class="btn btn-lize">Write My Reflection ✍️</a>
-      <a href="{{ url_for('student.dashboard') }}" class="btn btn-navy">Dashboard</a>
+      <a href="{{ url_for('student.dashboard') }}" class="btn btn-navy">Back to Dashboard</a>
     </div>
   </div>
 </div>
@@ -81,8 +79,10 @@
   </div>
 
   <a href="{{ url_for('student.dashboard') }}"
-     style="color:rgba(255,255,255,0.45);font-size:0.8rem;margin-top:2rem;">
-    ← Back to dashboard
+     style="color:rgba(255,255,255,0.6);font-size:0.85rem;margin-top:1.5rem;
+            padding:0.5rem 1.5rem;border-radius:20px;
+            border:1px solid rgba(255,255,255,0.2);display:inline-block;">
+    ← Dashboard
   </a>
 
 </div>
