@@ -197,8 +197,12 @@
             </div>
           {% endif %}
 
-          <a href="{{ url_for('student.view_journal', entry_id=entry.id) }}"
-             class="btn btn-lize-outline btn-sm mt-2">View full entry</a>
+          <div class="d-flex gap-2 mt-2">
+            <a href="{{ url_for('student.view_journal', entry_id=entry.id) }}"
+               class="btn btn-lize-outline btn-sm">View</a>
+            <a href="{{ url_for('student.edit_journal', entry_id=entry.id) }}"
+               class="btn btn-sm" style="background:var(--off-white);color:var(--navy);border:1.5px solid var(--border);">Edit</a>
+          </div>
         </div>
         {% endfor %}
 

@@ -89,6 +89,24 @@
           </div>
         </div>
         {% endif %}
+
+        <!-- Anonymous participant reflections -->
+        {% if anon_reflections %}
+        <div class="mb-4">
+          <h5 style="color:var(--navy);font-weight:700;">💬 What participants said</h5>
+          <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">
+            A few reflections shared anonymously by students who attended this event.
+          </p>
+          {% for r in anon_reflections %}
+          <div style="background:var(--off-white);border-left:3px solid var(--coral);
+                      border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:0.85rem;">
+            <p style="color:var(--text-dark);line-height:1.7;margin:0;font-style:italic;">
+              "{{ r.written_reflection }}"
+            </p>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
       </div>
 
       <!-- Sidebar -->

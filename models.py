@@ -119,6 +119,7 @@ class JournalEntry(db.Model):
     # Photos stored as JSON: [{"url": "...", "visibility": "private|pending|approved"}, ...]
     _photos = db.Column('photos', db.Text, default='[]')
     points_awarded = db.Column(db.Integer, default=0)
+    share_anonymous = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     @property

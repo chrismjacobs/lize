@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from models import db, Event, JournalEntry, Attendance
 from s3_utils import upload_file_to_s3
+import random
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
 
@@ -142,18 +143,21 @@ def new_journal():
         if audio_url:
             points += 5
 
+        share_anon = request.form.get('share_anonymous') == '1'
+
         entry = JournalEntry(
             user_id=current_user.id,
             event_id=event_id,
             written_reflection=written or None,
             audio_url=audio_url,
             points_awarded=points,
+            share_anonymous=share_anon,
         )
         entry.photos = photos
         db.session.add(entry)
         db.session.commit()
 
-        flash(f'Journal entry saved! You earned {points} reflection points.', 'success')
+        flash('Reflection saved!', 'success')
         return redirect(url_for('student.dashboard'))
 
     selected_event_id = request.args.get('event_id', type=int)
@@ -179,3 +183,49 @@ def view_journal(entry_id):
         flash('You do not have permission to view that entry.', 'danger')
         return redirect(url_for('student.dashboard'))
     return render_template('student/journal_view.html', entry=entry)
+
+
+@student_bp.route('/journal/<int:entry_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_journal(entry_id):
+    entry = JournalEntry.query.get_or_404(entry_id)
+    if entry.user_id != current_user.id and not current_user.is_staff:
+        abort(403)
+
+    if request.method == 'POST':
+        entry.written_reflection = request.form.get('written_reflection', '').strip() or None
+        entry.share_anonymous = request.form.get('share_anonymous') == '1'
+
+        # Add new photos (append to existing, cap at MAX_PHOTOS total)
+        share_photos = request.form.get('share_photos') == 'yes'
+        photo_files = request.files.getlist('photos')
+        existing = entry.photos
+        new_photos = []
+        slots_left = MAX_PHOTOS - len(existing)
+        for pf in photo_files[:max(slots_left, 0)]:
+            if pf and pf.filename:
+                try:
+                    url = upload_file_to_s3(pf, folder='journal/photos')
+                    visibility = 'pending' if share_photos else 'private'
+                    new_photos.append({'url': url, 'visibility': visibility})
+                except Exception as e:
+                    flash(f'One photo failed to upload: {e}', 'warning')
+        if new_photos:
+            entry.photos = existing + new_photos
+
+        # New audio replaces old
+        audio = request.files.get('audio')
+        if audio and audio.filename:
+            try:
+                entry.audio_url = upload_file_to_s3(audio, folder='audio')
+            except Exception as e:
+                flash(f'Audio upload failed: {e}', 'warning')
+
+        db.session.commit()
+        flash('Reflection updated.', 'success')
+        return redirect(url_for('student.dashboard'))
+
+    return render_template('student/journal_form.html',
+                           entry=entry,
+                           events=[entry.event],
+                           max_photos=MAX_PHOTOS)

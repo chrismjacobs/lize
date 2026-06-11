@@ -1,13 +1,19 @@
 {% extends 'base.html' %}
-{% block title %}Write a Reflection{% endblock %}
+{% block title %}{% if entry %}Edit Reflection{% else %}Write a Reflection{% endif %}{% endblock %}
 
 {% block content %}
 
 <section style="background:var(--navy);padding:2rem 1.5rem 1.5rem;color:#fff;">
   <div class="container-lg">
-    <h2 style="font-weight:800;margin-bottom:0.25rem;">✍️ Write a Reflection</h2>
+    <h2 style="font-weight:800;margin-bottom:0.25rem;">
+      {% if entry %}✏️ Edit Reflection{% else %}✍️ Write a Reflection{% endif %}
+    </h2>
     <p style="color:rgba(255,255,255,0.7);margin:0;">
-      Record your thoughts, audio, and photos after attending an event.
+      {% if entry %}
+        Update your thoughts, audio, or photos for this event.
+      {% else %}
+        Record your thoughts, audio, and photos after attending an event.
+      {% endif %}
     </p>
   </div>
 </section>
@@ -17,24 +23,33 @@
     <div class="row justify-content-center">
       <div class="col-lg-8">
 
-        <form id="journal-form" method="POST" action="{{ url_for('student.new_journal') }}"
+        <form id="journal-form" method="POST"
+              action="{% if entry %}{{ url_for('student.edit_journal', entry_id=entry.id) }}{% else %}{{ url_for('student.new_journal') }}{% endif %}"
               enctype="multipart/form-data">
 
-          <!-- Event selector -->
+          <!-- Event selector / label -->
           <div class="lize-card p-4 mb-4">
-            <h5 style="color:var(--navy);font-weight:700;margin-bottom:1rem;">Which event did you attend?</h5>
-            <select name="event_id" id="event-select" class="form-select" required>
-              <option value="" disabled {% if not selected_event %}selected{% endif %}>Select an event…</option>
-              {% for event in events %}
-                <option value="{{ event.id }}"
-                  {% if selected_event and selected_event.id == event.id %}selected{% endif %}>
-                  {{ event.title }}
-                  {% if event.date %} · {{ event.date.strftime('%b %d') }}{% endif %}
-                </option>
-              {% endfor %}
-            </select>
+            {% if entry %}
+              <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.25rem;">{{ entry.event.title }}</h5>
+              <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">
+                {% if entry.event.date %}{{ entry.event.date.strftime('%B %d, %Y') }}{% endif %}
+              </p>
+              <input type="hidden" name="event_id" value="{{ entry.event_id }}">
+            {% else %}
+              <h5 style="color:var(--navy);font-weight:700;margin-bottom:1rem;">Which event did you attend?</h5>
+              <select name="event_id" id="event-select" class="form-select" required>
+                <option value="" disabled {% if not selected_event %}selected{% endif %}>Select an event…</option>
+                {% for event in events %}
+                  <option value="{{ event.id }}"
+                    {% if selected_event and selected_event.id == event.id %}selected{% endif %}>
+                    {{ event.title }}
+                    {% if event.date %} · {{ event.date.strftime('%b %d') }}{% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            {% endif %}
 
-            <!-- Reflection prompts — shown when event is selected, updated via JS -->
+            <!-- Reflection prompts -->
             <div id="prompt-box" class="prompt-list mt-3" style="display:none;">
               <strong style="color:var(--navy);font-size:0.9rem;">💭 Prompts for this event:</strong>
               <ol id="prompt-list" style="margin-top:0.5rem;"></ol>
@@ -48,15 +63,21 @@
               Write about your experience. What surprised you? What did you feel? What will you remember?
             </p>
             <textarea name="written_reflection" class="form-control" rows="6"
-                      placeholder="Start writing here…"></textarea>
+                      placeholder="Start writing here…">{% if entry and entry.written_reflection %}{{ entry.written_reflection }}{% endif %}</textarea>
           </div>
 
           <!-- Audio recorder -->
           <div class="lize-card p-4 mb-4">
             <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">🎙 Audio Recording <span style="color:var(--text-muted);font-weight:400;font-size:0.85rem;">(optional)</span></h5>
-            <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">
-              Record yourself speaking about the experience — it only needs to be 1–2 minutes.
-            </p>
+            {% if entry and entry.audio_url %}
+              <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Current recording:</p>
+              <audio controls src="{{ entry.audio_url }}" style="width:100%;height:40px;display:block;margin-bottom:0.75rem;"></audio>
+              <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">Record below to replace it.</p>
+            {% else %}
+              <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">
+                Record yourself speaking about the experience — it only needs to be 1–2 minutes.
+              </p>
+            {% endif %}
             <div id="recorder-section">
               <div class="d-flex align-items-center gap-3">
                 <button type="button" id="record-btn" title="Start / stop recording">🎙</button>
@@ -69,7 +90,6 @@
               </div>
               <audio id="audio-preview" controls style="display:none;margin-top:1rem;width:100%;height:40px;"></audio>
             </div>
-            <!-- Hidden input carries base64 audio — replaced with blob on submit via app.js -->
             <input type="hidden" id="audio-data-input" name="audio_base64">
           </div>
 
@@ -78,46 +98,75 @@
             <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">
               📸 Photos <span style="color:var(--text-muted);font-weight:400;font-size:0.85rem;">(optional — up to {{ max_photos }})</span>
             </h5>
-            <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">
-              Select up to {{ max_photos }} photos from the event. JPG or PNG, max 10 MB each.
-            </p>
-            <input type="file" id="photo-input" name="photos" class="form-control"
-                   accept="image/jpeg,image/png,image/webp" multiple>
-            <div id="photo-count-warning" style="display:none;color:#e74c3c;font-size:0.85rem;margin-top:0.4rem;">
-              Maximum {{ max_photos }} photos. Only the first {{ max_photos }} will be uploaded.
-            </div>
-            <!-- Photo preview thumbnails -->
-            <div id="photo-previews" class="gallery-grid mt-3" style="display:none;"></div>
 
-            <!-- Share toggle — only shown when photos are selected -->
-            <div id="share-photo-section" style="display:none;margin-top:1rem;">
-              <div class="p-3 rounded-3" style="background:var(--off-white);border:1.5px solid var(--border);">
-                <p style="font-weight:600;color:var(--navy);margin-bottom:0.5rem;">
-                  Would you like to share these photos in the event gallery?
+            {% if entry and entry.photos %}
+              <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.5rem;">Current photos:</p>
+              <div class="gallery-grid mb-3">
+                {% for photo in entry.photos %}
+                  <img src="{{ photo.url }}" class="gallery-img" alt="Journal photo">
+                {% endfor %}
+              </div>
+              {% set slots_left = max_photos - entry.photos | length %}
+              {% if slots_left > 0 %}
+                <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem;">
+                  Add up to {{ slots_left }} more photo{{ 's' if slots_left != 1 }}:
                 </p>
-                <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.75rem;">
-                  If yes, OIA staff will review them before they appear publicly.
-                  No keeps them private — only you and staff can see them.
-                </p>
-                <div class="d-flex gap-3">
-                  <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-                    <input type="radio" name="share_photos" value="yes"> Yes, share them
-                  </label>
-                  <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-                    <input type="radio" name="share_photos" value="no" checked> No, keep them private
-                  </label>
+              {% else %}
+                <p style="font-size:0.85rem;color:var(--text-muted);">Maximum photos reached.</p>
+              {% endif %}
+            {% else %}
+              <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">
+                Select up to {{ max_photos }} photos from the event. JPG or PNG, max 10 MB each.
+              </p>
+            {% endif %}
+
+            {% set slots_left = max_photos - (entry.photos | length if entry and entry.photos else 0) %}
+            {% if slots_left > 0 %}
+              <input type="file" id="photo-input" name="photos" class="form-control"
+                     accept="image/jpeg,image/png,image/webp" multiple>
+              <div id="photo-count-warning" style="display:none;color:#e74c3c;font-size:0.85rem;margin-top:0.4rem;">
+                Only {{ slots_left }} more photo{{ 's' if slots_left != 1 }} allowed.
+              </div>
+              <div id="photo-previews" class="gallery-grid mt-3" style="display:none;"></div>
+
+              <div id="share-photo-section" style="display:none;margin-top:1rem;">
+                <div class="p-3 rounded-3" style="background:var(--off-white);border:1.5px solid var(--border);">
+                  <p style="font-weight:600;color:var(--navy);margin-bottom:0.5rem;">
+                    Would you like to share these photos in the event gallery?
+                  </p>
+                  <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.75rem;">
+                    If yes, OIA staff will review them before they appear publicly.
+                    No keeps them private — only you and staff can see them.
+                  </p>
+                  <div class="d-flex gap-3">
+                    <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                      <input type="radio" name="share_photos" value="yes"> Yes, share them
+                    </label>
+                    <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                      <input type="radio" name="share_photos" value="no" checked> No, keep them private
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
+            {% endif %}
           </div>
 
-          <!-- Points preview -->
-          <div class="mb-4 p-3 rounded-3" style="background:var(--gold);color:var(--text-dark);">
-            <strong>Points for this entry:</strong>
-            10 base + 5 for photo + 5 for audio = up to <strong>20 points</strong>
+          <!-- Share anonymously -->
+          <div class="lize-card p-4 mb-4">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">Share anonymously</h5>
+            <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">
+              Allow your written reflection to appear on the event page so future participants can read real student experiences. Your name is never shown.
+            </p>
+            <label class="d-flex align-items-start gap-2" style="cursor:pointer;">
+              <input type="checkbox" name="share_anonymous" value="1" class="mt-1"
+                     {% if entry and entry.share_anonymous %}checked{% endif %}>
+              <span>I'm happy for my reflection to appear anonymously on the event page</span>
+            </label>
           </div>
 
-          <button type="submit" class="btn btn-lize btn-lg w-100">Save Reflection</button>
+          <button type="submit" class="btn btn-lize btn-lg w-100">
+            {% if entry %}Update Reflection{% else %}Save Reflection{% endif %}
+          </button>
           <a href="{{ url_for('student.dashboard') }}" class="btn w-100 mt-2"
              style="background:var(--off-white);color:var(--text-muted);">Cancel</a>
         </form>
@@ -131,56 +180,62 @@
 
 {% block scripts %}
 <script>
-// Embed reflection prompts for all events so JS can show them on event select
 const eventPrompts = {
   {% for event in events %}
   {{ event.id }}: {{ event.reflection_prompts | tojson }},
   {% endfor %}
 };
 
-document.getElementById('event-select').addEventListener('change', function () {
-  const id = parseInt(this.value);
+function showPrompts(id) {
   const prompts = eventPrompts[id] || [];
-  const box = document.getElementById('prompt-box');
+  const box  = document.getElementById('prompt-box');
   const list = document.getElementById('prompt-list');
-
   if (prompts.length) {
     list.innerHTML = prompts.map(p => `<li>${p}</li>`).join('');
     box.style.display = 'block';
   } else {
     box.style.display = 'none';
   }
-});
+}
 
-// Trigger on page load if event pre-selected
+const sel = document.getElementById('event-select');
+if (sel) {
+  sel.addEventListener('change', () => showPrompts(parseInt(sel.value)));
+}
+
 window.addEventListener('DOMContentLoaded', () => {
-  const sel = document.getElementById('event-select');
-  if (sel.value) sel.dispatchEvent(new Event('change'));
+  if (sel && sel.value) showPrompts(parseInt(sel.value));
+  {% if entry %}
+  showPrompts({{ entry.event_id }});
+  {% endif %}
 });
 
 // Photo preview + count enforcement
-document.getElementById('photo-input').addEventListener('change', function () {
-  const MAX = {{ max_photos }};
-  const files = Array.from(this.files).slice(0, MAX);
-  const warning = document.getElementById('photo-count-warning');
-  const shareSection = document.getElementById('share-photo-section');
-  const previewBox = document.getElementById('photo-previews');
+const photoInput = document.getElementById('photo-input');
+if (photoInput) {
+  const MAX_NEW = {{ (max_photos - (entry.photos | length if entry and entry.photos else 0)) }};
+  photoInput.addEventListener('change', function () {
+    const files = Array.from(this.files).slice(0, MAX_NEW);
+    const warning     = document.getElementById('photo-count-warning');
+    const shareSection = document.getElementById('share-photo-section');
+    const previewBox  = document.getElementById('photo-previews');
 
-  warning.style.display = this.files.length > MAX ? 'block' : 'none';
-  shareSection.style.display = files.length ? 'block' : 'none';
-  previewBox.style.display = files.length ? 'grid' : 'none';
+    warning.style.display = this.files.length > MAX_NEW ? 'block' : 'none';
+    shareSection.style.display = files.length ? 'block' : 'none';
+    previewBox.style.display   = files.length ? 'grid' : 'none';
 
-  previewBox.innerHTML = '';
-  files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = document.createElement('img');
-      img.src = e.target.result;
-      img.className = 'gallery-img';
-      previewBox.appendChild(img);
-    };
-    reader.readAsDataURL(file);
+    previewBox.innerHTML = '';
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.className = 'gallery-img';
+        previewBox.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
   });
-});
+}
 </script>
 {% endblock %}
