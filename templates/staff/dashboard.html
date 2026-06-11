@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height:calc(100vh - 56px);">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar d-none d-md-block" style="width:220px;flex-shrink:0;">
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-link active" href="{{ url_for('staff.dashboard') }}">
+      <span class="icon">📊</span> Dashboard
+    </a>
+    <div class="sidebar-section">Manage</div>
+    <a class="nav-link" href="{{ url_for('staff.events') }}">
+      <span class="icon">📅</span> Events
+    </a>
+    <a class="nav-link" href="{{ url_for('staff.photo_queue') }}">
+      <span class="icon">📸</span> Photo Queue
+      {% if pending_photos %}
+        <span class="badge rounded-pill ms-1"
+              style="background:var(--coral);color:#fff;font-size:0.65rem;">{{ pending_photos }}</span>
+      {% endif %}
+    </a>
+    <a class="nav-link" href="{{ url_for('staff.journals') }}">
+      <span class="icon">📓</span> All Journals
+    </a>
+    <div class="sidebar-section">Attendance</div>
+    <a class="nav-link" href="{{ url_for('staff.scanner') }}"><span class="icon">📷</span> QR Scanner</a>
+    <div class="sidebar-section">Content</div>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='home') }}">
+      <span class="icon">🏠</span> Home Page
+    </a>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='about') }}">
+      <span class="icon">ℹ️</span> About Page
+    </a>
+  </nav>
+
+  <!-- Main -->
+  <main class="flex-grow-1 p-4">
+    <h3 style="color:var(--navy);font-weight:800;margin-bottom:1.5rem;">Admin Dashboard</h3>
+
+    <!-- Stats row -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e8f4fd;color:#2980b9;">📅</div>
+          <div>
+            <div class="stat-value">{{ events | length }}</div>
+            <div class="stat-label">Events</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fef5e7;color:#e67e22;">👥</div>
+          <div>
+            <div class="stat-value">{{ students | length }}</div>
+            <div class="stat-label">Students</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#eafaf1;color:#27ae60;">📓</div>
+          <div>
+            <div class="stat-value">{{ total_entries }}</div>
+            <div class="stat-label">Journal Entries</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fdf2f8;color:var(--coral);">📸</div>
+          <div>
+            <div class="stat-value">{{ pending_photos }}</div>
+            <div class="stat-label">Photos Pending</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#f0f4ff;color:var(--navy);">📷</div>
+          <div>
+            <div class="stat-value">{{ total_checkins }}</div>
+            <div class="stat-label">Check-ins</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <a href="{{ url_for('staff.new_event') }}" class="btn btn-lize w-100">+ New Event</a>
+      </div>
+      <div class="col-md-4">
+        <a href="{{ url_for('staff.photo_queue') }}" class="btn btn-navy w-100">
+          Review Photos {% if pending_photos %}({{ pending_photos }}){% endif %}
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a href="{{ url_for('staff.journals') }}" class="btn w-100"
+           style="background:var(--off-white);color:var(--text-dark);">View All Journals</a>
+      </div>
+      <div class="col-md-4">
+        <a href="{{ url_for('staff.scanner') }}" class="btn btn-navy w-100">📷 QR Scanner</a>
+      </div>
+    </div>
+
+    <!-- Events table -->
+    <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.75rem;">Events</h5>
+    <div class="lize-card overflow-hidden mb-4">
+      <table class="table table-hover mb-0" style="font-size:0.9rem;">
+        <thead style="background:var(--off-white);">
+          <tr>
+            <th style="color:var(--text-muted);font-weight:600;">Event</th>
+            <th style="color:var(--text-muted);font-weight:600;">Date</th>
+            <th style="color:var(--text-muted);font-weight:600;">Fill</th>
+            <th style="color:var(--text-muted);font-weight:600;">Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in events %}
+          <tr>
+            <td style="font-weight:600;color:var(--navy);">{{ event.title }}</td>
+            <td style="color:var(--text-muted);">
+              {% if event.date %}{{ event.date.strftime('%b %d') }}{% endif %}
+            </td>
+            <td style="min-width:100px;">
+              {% if event.capacity %}
+                <div class="fill-bar" style="height:8px;">
+                  <div class="fill-bar-inner" data-pct="{{ event.fill_percent }}" style="width:0;"></div>
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">
+                  {{ event.registered_count }}/{{ event.capacity }}
+                </div>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if event.is_published %}
+                <span class="badge rounded-pill"
+                      style="background:var(--success);color:#fff;font-size:0.7rem;">Published</span>
+              {% else %}
+                <span class="badge rounded-pill badge-muted" style="font-size:0.7rem;">Draft</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('staff.edit_event', event_id=event.id) }}"
+                 class="btn btn-sm btn-lize-outline">Edit</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+{% endblock %}

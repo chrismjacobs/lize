@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block title %}Check In — {{ event.title }}{% endblock %}
+
+{% block content %}
+
+{% if attended %}
+
+<!-- Already checked in — show static stamp -->
+<div class="checkin-bg">
+  <div class="checkin-card text-center">
+    <div style="position:relative;width:160px;height:160px;margin:0 auto 1.5rem;">
+      <div class="stamp-ink stamp-static">
+        <div class="stamp-inner">
+          <div class="stamp-top">LI-ZE</div>
+          <div class="stamp-check">✓</div>
+          <div class="stamp-bottom">CHECKED IN</div>
+        </div>
+      </div>
+    </div>
+    <h4 style="color:var(--navy);font-weight:700;margin-bottom:0.25rem;">You're checked in!</h4>
+    <p style="color:var(--text-muted);">{{ event.title }}</p>
+    <div class="d-flex gap-2 justify-content-center mt-3 flex-wrap">
+      <a href="{{ url_for('student.new_journal', event_id=event.id) }}"
+         class="btn btn-lize">Write My Reflection ✍️</a>
+      <a href="{{ url_for('student.dashboard') }}" class="btn btn-navy">Dashboard</a>
+    </div>
+  </div>
+</div>
+
+{% else %}
+
+<!-- QR code display -->
+<div class="checkin-bg" id="qr-page">
+
+  <div class="checkin-card">
+    <div class="text-center mb-3">
+      <p style="color:var(--text-muted);font-size:0.78rem;text-transform:uppercase;
+                letter-spacing:0.08em;margin-bottom:0.25rem;">Li-Ze Academy</p>
+      <h5 style="color:var(--navy);font-weight:700;margin:0;">{{ event.title }}</h5>
+      <p style="color:var(--text-muted);font-size:0.82rem;margin:0.25rem 0 0;">
+        Show this QR code to the staff scanner
+      </p>
+    </div>
+
+    <!-- QR area -->
+    <div class="qr-area">
+      <div id="qr-loading" class="text-center" style="color:var(--text-muted);font-size:0.85rem;">
+        <div class="spinner-border spinner-border-sm mb-1"></div><br>Generating…
+      </div>
+      <div id="qr-container" style="display:none;"></div>
+    </div>
+
+    <!-- Name pill -->
+    <div class="text-center mt-3">
+      <span class="student-name-pill">{{ current_user.name }}</span>
+    </div>
+
+    <!-- Timer -->
+    <div class="mt-3">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span style="font-size:0.76rem;color:var(--text-muted);">Code valid for</span>
+        <span id="timer-text" style="font-size:0.85rem;color:var(--navy);font-weight:600;
+                                     font-variant-numeric:tabular-nums;"></span>
+      </div>
+      <div style="height:4px;background:var(--border);border-radius:3px;overflow:hidden;">
+        <div id="timer-bar"
+             style="height:100%;background:var(--coral);border-radius:3px;
+                    width:100%;transition:width 1s linear;"></div>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:0.72rem;color:var(--text-muted);margin-top:0.6rem;">
+      Refreshes automatically
+    </p>
+  </div>
+
+  <!-- Waiting indicator -->
+  <div id="waiting-msg" class="mt-3 text-center"
+       style="color:rgba(255,255,255,0.55);font-size:0.88rem;">
+    <span class="spinner-border spinner-border-sm me-2" style="width:0.85rem;height:0.85rem;"></span>
+    Waiting to be scanned…
+  </div>
+
+  <a href="{{ url_for('student.dashboard') }}"
+     style="color:rgba(255,255,255,0.45);font-size:0.8rem;margin-top:2rem;">
+    ← Back to dashboard
+  </a>
+
+</div>
+
+<!-- Stamp overlay — shown when checked in -->
+<div id="stamp-overlay" class="stamp-overlay">
+  <div style="position:relative;width:200px;height:200px;margin-bottom:1.5rem;">
+    <div class="ink-ripple" id="ink-ripple"></div>
+    <div class="stamp-ink" id="stamp-ink">
+      <div class="stamp-inner">
+        <div class="stamp-top">LI-ZE</div>
+        <div class="stamp-check">✓</div>
+        <div class="stamp-bottom">CHECKED IN</div>
+      </div>
+    </div>
+  </div>
+  <h3 id="stamp-name" style="color:#fff;font-weight:700;margin:0;"></h3>
+  <p style="color:rgba(255,255,255,0.65);margin:0.35rem 0 0;">{{ event.title }}</p>
+  <a href="{{ url_for('student.dashboard') }}"
+     id="stamp-btn"
+     class="btn btn-lize mt-3" style="display:none;">Go to Dashboard</a>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if not attended %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  const TOKEN_URL  = {{ url_for('student.api_checkin_token', event_id=event.id) | tojson }};
+  const STATUS_URL = {{ url_for('student.api_checkin_status', event_id=event.id) | tojson }};
+  const USER_NAME  = {{ current_user.name | tojson }};
+
+  let tokenTTL      = 1800;
+  let tokenAge      = 0;
+  let timerInterval = null;
+  let pollInterval  = null;
+
+  async function loadToken() {
+    try {
+      const res  = await fetch(TOKEN_URL);
+      const data = await res.json();
+      tokenAge = 0;
+      tokenTTL = data.ttl || 1800;
+      renderQR(data.token);
+    } catch (_) {}
+  }
+
+  function renderQR(token) {
+    const container = document.getElementById('qr-container');
+    document.getElementById('qr-loading').style.display = 'none';
+    container.style.display = 'block';
+    container.innerHTML = '';
+    new QRCode(container, {
+      text: token,
+      width: 256,
+      height: 256,
+      colorDark: '#1b2d5e',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  }
+
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      tokenAge++;
+      const remaining = Math.max(0, tokenTTL - tokenAge);
+      const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+      const s = (remaining % 60).toString().padStart(2, '0');
+      const timerText = document.getElementById('timer-text');
+      const timerBar  = document.getElementById('timer-bar');
+      if (timerText) timerText.textContent = `${m}:${s}`;
+      if (timerBar)  timerBar.style.width  = `${(remaining / tokenTTL) * 100}%`;
+      // Refresh when 10 minutes remain
+      if (remaining <= 600 && remaining > 0 && tokenAge >= tokenTTL - 600) {
+        tokenAge = tokenTTL; // prevent multiple refreshes
+        loadToken().then(() => startTimer());
+      }
+    }, 1000);
+  }
+
+  async function pollStatus() {
+    try {
+      const res  = await fetch(STATUS_URL);
+      const data = await res.json();
+      if (data.attended) {
+        clearInterval(pollInterval);
+        clearInterval(timerInterval);
+        showStamp();
+      }
+    } catch (_) {}
+  }
+
+  function showStamp() {
+    const overlay = document.getElementById('stamp-overlay');
+    const ink     = document.getElementById('stamp-ink');
+    const ripple  = document.getElementById('ink-ripple');
+    const btn     = document.getElementById('stamp-btn');
+    const nameEl  = document.getElementById('stamp-name');
+
+    nameEl.textContent = USER_NAME;
+    overlay.classList.add('visible');
+
+    // Small delay so CSS transition starts after display:flex kicks in
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        ink.classList.add('animate');
+        ripple.classList.add('animate');
+      });
+    });
+
+    setTimeout(() => { btn.style.display = 'inline-block'; }, 1200);
+  }
+
+  // Start
+  loadToken().then(() => startTimer());
+  pollInterval = setInterval(pollStatus, 3000);
+</script>
+{% endif %}
+{% endblock %}

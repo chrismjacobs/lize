@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Manage Events{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height:calc(100vh - 56px);">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar d-none d-md-block" style="width:220px;flex-shrink:0;">
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-link" href="{{ url_for('staff.dashboard') }}"><span class="icon">📊</span> Dashboard</a>
+    <div class="sidebar-section">Manage</div>
+    <a class="nav-link active" href="{{ url_for('staff.events') }}"><span class="icon">📅</span> Events</a>
+    <a class="nav-link" href="{{ url_for('staff.photo_queue') }}"><span class="icon">📸</span> Photo Queue</a>
+    <a class="nav-link" href="{{ url_for('staff.journals') }}"><span class="icon">📓</span> All Journals</a>
+    <div class="sidebar-section">Attendance</div>
+    <a class="nav-link" href="{{ url_for('staff.scanner') }}"><span class="icon">📷</span> QR Scanner</a>
+    <div class="sidebar-section">Content</div>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='home') }}"><span class="icon">🏠</span> Home Page</a>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='about') }}"><span class="icon">ℹ️</span> About Page</a>
+  </nav>
+
+  <main class="flex-grow-1 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 style="color:var(--navy);font-weight:800;margin:0;">Events</h3>
+      <a href="{{ url_for('staff.new_event') }}" class="btn btn-lize">+ New Event</a>
+    </div>
+
+    <div class="lize-card overflow-hidden">
+      <table class="table table-hover mb-0" style="font-size:0.9rem;">
+        <thead style="background:var(--off-white);">
+          <tr>
+            <th style="color:var(--text-muted);font-weight:600;">Title</th>
+            <th style="color:var(--text-muted);font-weight:600;">Date</th>
+            <th style="color:var(--text-muted);font-weight:600;">Capacity</th>
+            <th style="color:var(--text-muted);font-weight:600;">Status</th>
+            <th style="color:var(--text-muted);font-weight:600;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in events %}
+          <tr>
+            <td style="font-weight:600;color:var(--navy);">
+              <a href="{{ url_for('public.event_detail', event_id=event.id) }}"
+                 style="color:var(--navy);" target="_blank">{{ event.title }}</a>
+            </td>
+            <td style="color:var(--text-muted);">
+              {% if event.date %}{{ event.date.strftime('%b %d, %Y') }}{% else %}—{% endif %}
+            </td>
+            <td>
+              {% if event.capacity %}
+                {{ event.registered_count }} / {{ event.capacity }}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if event.is_published %}
+                <span class="badge rounded-pill" style="background:var(--success);color:#fff;font-size:0.7rem;">Published</span>
+              {% else %}
+                <span class="badge rounded-pill badge-muted" style="font-size:0.7rem;">Draft</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-2">
+                <a href="{{ url_for('staff.edit_event', event_id=event.id) }}"
+                   class="btn btn-sm btn-lize-outline">Edit</a>
+                <form method="POST"
+                      action="{{ url_for('staff.delete_event', event_id=event.id) }}"
+                      style="display:inline;">
+                  <button type="submit" class="btn btn-sm"
+                          style="background:#fdf2f2;color:#e74c3c;border:none;"
+                          data-confirm="Delete '{{ event.title }}'? This cannot be undone.">
+                    Delete
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+{% endblock %}

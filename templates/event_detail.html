@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+
+<!-- Hero image or gradient -->
+{% if event.hero_image_url %}
+  <div style="height:320px;overflow:hidden;background:var(--navy);">
+    <img src="{{ event.hero_image_url }}" alt="{{ event.title }}"
+         style="width:100%;height:100%;object-fit:cover;opacity:0.85;">
+  </div>
+{% else %}
+  <div class="lize-hero" style="padding:3rem 1.5rem;">
+    <div class="container-lg">
+      <h1>{{ event.title }}</h1>
+    </div>
+  </div>
+{% endif %}
+
+<section class="py-5">
+  <div class="container-lg">
+    <div class="row g-5">
+
+      <!-- Main content -->
+      <div class="col-lg-8">
+        {% if event.hero_image_url %}
+          <h1 class="section-title mb-1" style="font-size:2rem;">{{ event.title }}</h1>
+        {% endif %}
+
+        {% if event.short_description %}
+          <p class="lead mb-4" style="color:var(--text-muted);">{{ event.short_description }}</p>
+        {% endif %}
+
+        {% set desc = event.description_data %}
+        {% if desc %}
+          <div class="mb-4" style="line-height:1.75;color:var(--text-dark);">
+            {% if desc.intro %}
+              <p>{{ desc.intro }}</p>
+            {% endif %}
+            {% if desc.details %}
+              <p>{{ desc.details }}</p>
+            {% endif %}
+            {% if desc.expect %}
+              <h5 style="color:var(--navy);font-weight:700;margin-top:1.25rem;">What to expect</h5>
+              <ul style="padding-left:1.25rem;">
+                {% for item in desc.expect %}
+                  <li style="margin-bottom:0.4rem;">{{ item }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% if desc.closing %}
+              <p style="margin-top:1rem;">{{ desc.closing }}</p>
+            {% endif %}
+          </div>
+        {% elif event.full_description_html %}
+          <div class="mb-4" style="line-height:1.75;color:var(--text-dark);">
+            {{ event.full_description_html | safe }}
+          </div>
+        {% endif %}
+
+        <!-- Reflection prompts -->
+        {% if event.reflection_prompts %}
+        <div class="mb-4">
+          <h5 style="color:var(--navy);font-weight:700;">💭 Reflection Prompts</h5>
+          <p style="color:var(--text-muted);font-size:0.9rem;">
+            Think about these questions before and after attending. Use them in your journal entry.
+          </p>
+          <div class="prompt-list">
+            <ol>
+              {% for prompt in event.reflection_prompts %}
+                <li>{{ prompt }}</li>
+              {% endfor %}
+            </ol>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Photo gallery -->
+        {% set all_photos = ([event.hero_image_url] if event.hero_image_url else []) + event.gallery_images + event.approved_student_photos %}
+        {% if all_photos | length > 1 %}
+        <div class="mb-4">
+          <h5 style="color:var(--navy);font-weight:700;">📸 Gallery</h5>
+          <div class="gallery-grid">
+            {% for url in all_photos %}
+              <a href="{{ url }}" target="_blank" rel="noopener">
+                <img src="{{ url }}" class="gallery-img" alt="Event photo">
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <div class="lize-card p-4 sticky-top" style="top:80px;">
+
+          <!-- Date & time -->
+          {% if event.date %}
+          <div class="mb-3">
+            <div class="section-label">Date & Time</div>
+            <div style="font-weight:600;color:var(--navy);">
+              {{ event.date.strftime('%A, %B %d, %Y') }}
+            </div>
+            <div style="color:var(--text-muted);font-size:0.9rem;">
+              {{ event.date.strftime('%I:%M %p') }}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Location -->
+          {% if event.location %}
+          <div class="mb-3">
+            <div class="section-label">Location</div>
+            <div style="font-weight:600;color:var(--navy);">{{ event.location }}</div>
+          </div>
+          {% endif %}
+
+          <!-- Capacity -->
+          {% if event.capacity %}
+          <div class="mb-3">
+            <div class="section-label">Capacity</div>
+            <div style="font-weight:600;color:var(--navy);">
+              {{ event.registered_count }} / {{ event.capacity }} registered
+            </div>
+            <div class="fill-bar mt-1">
+              <div class="fill-bar-inner" data-pct="{{ event.fill_percent }}" style="width:0"></div>
+            </div>
+            {% if event.spots_remaining == 0 %}
+              <div class="mt-1" style="color:#e74c3c;font-size:0.85rem;font-weight:600;">This event is full.</div>
+            {% elif event.spots_remaining is not none %}
+              <div class="mt-1" style="color:var(--text-muted);font-size:0.85rem;">
+                {{ event.spots_remaining }} spot{{ 's' if event.spots_remaining != 1 }} remaining
+              </div>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <!-- Register button -->
+          {% if event.registration_url %}
+            {% if event.spots_remaining == 0 %}
+              <button class="btn btn-navy w-100 mb-2" disabled>Registration Full</button>
+            {% else %}
+              <a href="{{ event.registration_url }}" target="_blank" rel="noopener"
+                 class="btn btn-lize w-100 mb-2">Register (Google Form)</a>
+            {% endif %}
+          {% endif %}
+
+          <!-- Journal CTA -->
+          {% if current_user.is_authenticated and not current_user.is_staff %}
+            {% if user_attended %}
+              <a href="{{ url_for('student.new_journal', event_id=event.id) }}"
+                 class="btn btn-navy w-100">Write My Reflection ✍️</a>
+            {% else %}
+              <a href="{{ url_for('student.checkin_qr', event_id=event.id) }}"
+                 class="btn btn-lize w-100">Get My Check-in QR ▷</a>
+              <p style="font-size:0.78rem;color:var(--text-muted);text-align:center;margin:0.4rem 0 0;">
+                Check in at the event, then write your reflection
+              </p>
+            {% endif %}
+          {% elif not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-lize-outline w-100 mt-1">
+              Log in to write a reflection
+            </a>
+          {% endif %}
+
+          <a href="{{ url_for('public.events') }}" class="btn w-100 mt-2"
+             style="background:var(--off-white);color:var(--text-muted);">← Back to Events</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}

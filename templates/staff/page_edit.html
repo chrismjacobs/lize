@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Edit — {{ page.title }}{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+<style>
+  .ql-toolbar { border-radius: 8px 8px 0 0 !important; border-color: var(--border) !important; }
+  .ql-container { border-radius: 0 0 8px 8px !important; border-color: var(--border) !important; font-size: 0.95rem; }
+  .ql-editor { min-height: 280px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height:calc(100vh - 56px);">
+
+  <nav class="admin-sidebar d-none d-md-block" style="width:220px;flex-shrink:0;">
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-link" href="{{ url_for('staff.dashboard') }}"><span class="icon">📊</span> Dashboard</a>
+    <div class="sidebar-section">Manage</div>
+    <a class="nav-link" href="{{ url_for('staff.events') }}"><span class="icon">📅</span> Events</a>
+    <a class="nav-link" href="{{ url_for('staff.photo_queue') }}"><span class="icon">📸</span> Photo Queue</a>
+    <a class="nav-link" href="{{ url_for('staff.journals') }}"><span class="icon">📓</span> All Journals</a>
+    <div class="sidebar-section">Attendance</div>
+    <a class="nav-link" href="{{ url_for('staff.scanner') }}"><span class="icon">📷</span> QR Scanner</a>
+    <div class="sidebar-section">Content</div>
+    <a class="nav-link {% if page.slug == 'home' %}active{% endif %}"
+       href="{{ url_for('staff.edit_page', slug='home') }}"><span class="icon">🏠</span> Home Page</a>
+    <a class="nav-link {% if page.slug == 'about' %}active{% endif %}"
+       href="{{ url_for('staff.edit_page', slug='about') }}"><span class="icon">ℹ️</span> About Page</a>
+  </nav>
+
+  <main class="flex-grow-1 p-4">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a href="{{ url_for('staff.dashboard') }}" style="color:var(--text-muted);font-size:0.9rem;">← Dashboard</a>
+      <h3 style="color:var(--navy);font-weight:800;margin:0;">Edit: {{ page.title }}</h3>
+    </div>
+
+    <form method="POST"
+          action="{{ url_for('staff.edit_page', slug=page.slug) }}"
+          enctype="multipart/form-data">
+
+      <div class="lize-card p-4 mb-4">
+        <div class="mb-3">
+          <label class="form-label">Page Title</label>
+          <input type="text" name="title" class="form-control" value="{{ page.title }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Content</label>
+          <div id="quill-editor" style="background:#fff;border-radius:8px;"></div>
+          <textarea name="content_html" id="content_html"
+                    style="display:none;">{{ page.content_html or '' }}</textarea>
+          <div class="form-text">Use the toolbar to format text. No HTML knowledge needed.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Page Image <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+          {% if page.image_url %}
+            <img src="{{ page.image_url }}" alt="Current image"
+                 style="max-height:120px;border-radius:8px;display:block;margin-bottom:0.5rem;">
+          {% endif %}
+          <input type="file" name="image" class="form-control" accept="image/*">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-lize">Save Page</button>
+      <a href="{{ url_for('staff.dashboard') }}" class="btn ms-2"
+         style="background:var(--off-white);color:var(--text-muted);">Cancel</a>
+    </form>
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script>
+  const quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        ['bold', 'italic', 'underline'],
+        [{ 'header': 2 }, { 'header': 3 }],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        ['link'],
+        ['clean']
+      ]
+    },
+    placeholder: 'Write your page content here…'
+  });
+
+  const existing = document.getElementById('content_html').value.trim();
+  if (existing) {
+    quill.root.innerHTML = existing;
+  }
+
+  document.querySelector('form').addEventListener('submit', () => {
+    document.getElementById('content_html').value = quill.root.innerHTML;
+  });
+</script>
+{% endblock %}

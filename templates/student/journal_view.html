@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Journal Entry — {{ entry.event.title }}{% endblock %}
+
+{% block content %}
+
+<section style="background:var(--navy);padding:2rem 1.5rem 1.5rem;color:#fff;">
+  <div class="container-lg">
+    <a href="{{ url_for('student.dashboard') }}" style="color:rgba(255,255,255,0.7);font-size:0.9rem;">
+      ← Back to dashboard
+    </a>
+    <h2 style="font-weight:800;margin-top:0.5rem;margin-bottom:0.25rem;">
+      {{ entry.event.title }}
+    </h2>
+    <p style="color:rgba(255,255,255,0.7);margin:0;">
+      {{ entry.created_at.strftime('%B %d, %Y') }} ·
+      <span style="color:var(--gold);">+{{ entry.points_awarded }} points</span>
+    </p>
+  </div>
+</section>
+
+<section class="py-4">
+  <div class="container-lg">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        {% if entry.written_reflection %}
+        <div class="lize-card p-4 mb-4">
+          <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.75rem;">📝 Written Reflection</h5>
+          <div style="line-height:1.75;color:var(--text-dark);white-space:pre-wrap;">{{ entry.written_reflection }}</div>
+        </div>
+        {% endif %}
+
+        {% if entry.audio_url %}
+        <div class="lize-card p-4 mb-4">
+          <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.75rem;">🎙 Audio Recording</h5>
+          <audio controls src="{{ entry.audio_url }}" style="width:100%;"></audio>
+        </div>
+        {% endif %}
+
+        {% if entry.photos %}
+        <div class="lize-card p-4 mb-4">
+          <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.75rem;">
+            📸 Photos ({{ entry.photos | length }})
+          </h5>
+          <div class="gallery-grid">
+            {% for photo in entry.photos %}
+              <div>
+                <a href="{{ photo.url }}" target="_blank" rel="noopener">
+                  <img src="{{ photo.url }}" class="gallery-img" alt="Journal photo">
+                </a>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">
+                  {% if photo.visibility == 'private' %}🔒 Private
+                  {% elif photo.visibility == 'pending' %}⏳ Awaiting approval
+                  {% elif photo.visibility == 'approved' %}✅ In gallery
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Reflection prompts from the event -->
+        {% if entry.event.reflection_prompts %}
+        <div class="prompt-list">
+          <strong style="color:var(--navy);font-size:0.9rem;">💭 Prompts for this event:</strong>
+          <ol style="margin-top:0.5rem;">
+            {% for prompt in entry.event.reflection_prompts %}
+              <li>{{ prompt }}</li>
+            {% endfor %}
+          </ol>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('public.event_detail', event_id=entry.event_id) }}"
+           class="btn btn-lize-outline mt-3">View event page</a>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

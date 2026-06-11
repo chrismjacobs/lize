@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}{% if event %}Edit Event{% else %}New Event{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height:calc(100vh - 56px);">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar d-none d-md-block" style="width:220px;flex-shrink:0;">
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-link" href="{{ url_for('staff.dashboard') }}"><span class="icon">📊</span> Dashboard</a>
+    <div class="sidebar-section">Manage</div>
+    <a class="nav-link active" href="{{ url_for('staff.events') }}"><span class="icon">📅</span> Events</a>
+    <a class="nav-link" href="{{ url_for('staff.photo_queue') }}"><span class="icon">📸</span> Photo Queue</a>
+    <a class="nav-link" href="{{ url_for('staff.journals') }}"><span class="icon">📓</span> All Journals</a>
+    <div class="sidebar-section">Attendance</div>
+    <a class="nav-link" href="{{ url_for('staff.scanner') }}"><span class="icon">📷</span> QR Scanner</a>
+    <div class="sidebar-section">Content</div>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='home') }}"><span class="icon">🏠</span> Home Page</a>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='about') }}"><span class="icon">ℹ️</span> About Page</a>
+  </nav>
+
+  <main class="flex-grow-1 p-4">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a href="{{ url_for('staff.events') }}" style="color:var(--text-muted);font-size:0.9rem;">← Events</a>
+      <h3 style="color:var(--navy);font-weight:800;margin:0;">
+        {% if event %}Edit: {{ event.title }}{% else %}New Event{% endif %}
+      </h3>
+    </div>
+
+    <form method="POST"
+          action="{% if event %}{{ url_for('staff.edit_event', event_id=event.id) }}{% else %}{{ url_for('staff.new_event') }}{% endif %}"
+          enctype="multipart/form-data">
+
+      <div class="row g-4">
+        <div class="col-lg-8">
+
+          <!-- Basic info -->
+          <div class="lize-card p-4 mb-4">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:1rem;">Basic Information</h5>
+
+            <div class="mb-3">
+              <label class="form-label">Event Title *</label>
+              <input type="text" name="title" class="form-control" required
+                     value="{{ event.title if event else '' }}"
+                     placeholder="e.g. Welcome to My Home">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Short Description</label>
+              <input type="text" name="short_description" class="form-control"
+                     value="{{ event.short_description if event else '' }}"
+                     placeholder="One sentence summary shown on the events list">
+            </div>
+
+            <!-- Structured description — no HTML needed -->
+            {% set desc = event.description_data if event else none %}
+
+            <div class="mb-3">
+              <label class="form-label">Introduction</label>
+              <textarea name="desc_intro" class="form-control" rows="3"
+                        placeholder="Opening paragraph — what this event is and why it matters.">{{ desc.intro if desc else '' }}</textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">More Details <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+              <textarea name="desc_details" class="form-control" rows="3"
+                        placeholder="Second paragraph with extra context, background, or what makes it special.">{{ desc.details if desc else '' }}</textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">What to Expect</label>
+              <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.5rem;">Add each bullet point separately. Click + to add more.</p>
+              <div id="expect-list" class="d-flex flex-column gap-2">
+                {% if desc and desc.expect %}
+                  {% for item in desc.expect %}
+                  <div class="d-flex gap-2 expect-item">
+                    <input type="text" class="form-control expect-input" value="{{ item }}" placeholder="e.g. A home-cooked Taiwanese meal">
+                    <button type="button" class="btn btn-sm remove-expect-btn"
+                            style="background:#fdf2f2;color:#e74c3c;border:none;padding:0 0.65rem;border-radius:8px;font-size:1.1rem;">✕</button>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="d-flex gap-2 expect-item">
+                    <input type="text" class="form-control expect-input" placeholder="e.g. A home-cooked Taiwanese meal">
+                    <button type="button" class="btn btn-sm remove-expect-btn"
+                            style="background:#fdf2f2;color:#e74c3c;border:none;padding:0 0.65rem;border-radius:8px;font-size:1.1rem;">✕</button>
+                  </div>
+                {% endif %}
+              </div>
+              <button type="button" id="add-expect-btn" class="btn btn-sm mt-2"
+                      style="background:var(--off-white);color:var(--navy);border:1.5px dashed var(--border);">
+                + Add item
+              </button>
+              <input type="hidden" name="desc_expect" id="desc_expect_input">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Closing Note <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+              <textarea name="desc_closing" class="form-control" rows="2"
+                        placeholder="Final line — a warm send-off or practical reminder.">{{ desc.closing if desc else '' }}</textarea>
+            </div>
+          </div>
+
+          <!-- Reflection prompts -->
+          <div class="lize-card p-4 mb-4">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">💭 Reflection Prompts</h5>
+            <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">
+              One prompt per line. Students see these on the event page and in the journal form.
+            </p>
+            <textarea name="reflection_prompts" class="form-control" rows="5"
+                      placeholder="What surprised you most about this experience?&#10;Was there a moment of genuine connection? Describe it.">{% if event %}{{ event.reflection_prompts | join('\n') }}{% endif %}</textarea>
+          </div>
+
+          <!-- Hero image -->
+          <div class="lize-card p-4 mb-4">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.75rem;">Hero Image</h5>
+            {% if event and event.hero_image_url %}
+              <img src="{{ event.hero_image_url }}" alt="Current hero"
+                   style="max-height:160px;border-radius:8px;object-fit:cover;margin-bottom:0.75rem;display:block;">
+            {% endif %}
+            <input type="file" name="hero_image" class="form-control" accept="image/*">
+            <div class="form-text">Upload a new image to replace the current one. Recommended: 1200×600px.</div>
+          </div>
+
+          <!-- Gallery images -->
+          <div class="lize-card p-4 mb-4">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.75rem;">Gallery Images</h5>
+            {% if event and event.gallery_images %}
+              <div class="gallery-grid mb-3">
+                {% for url in event.gallery_images %}
+                  <div style="position:relative;">
+                    <img src="{{ url }}" class="gallery-img" alt="Gallery photo">
+                    <form method="POST"
+                          action="{{ url_for('staff.remove_gallery_image', event_id=event.id) }}"
+                          style="position:absolute;top:4px;right:4px;">
+                      <input type="hidden" name="url" value="{{ url }}">
+                      <button type="submit" class="btn btn-sm"
+                              style="background:rgba(0,0,0,0.6);color:#fff;border:none;padding:2px 6px;border-radius:4px;font-size:0.75rem;"
+                              data-confirm="Remove this gallery image?">✕</button>
+                    </form>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <input type="file" name="gallery_images" class="form-control" accept="image/*" multiple>
+            <div class="form-text">You can select multiple images at once.</div>
+          </div>
+
+        </div>
+
+        <!-- Right column -->
+        <div class="col-lg-4">
+          <div class="lize-card p-4 mb-4 sticky-top" style="top:80px;">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:1rem;">Event Details</h5>
+
+            <div class="mb-3">
+              <label class="form-label">Date & Time</label>
+              <input type="datetime-local" name="date" class="form-control"
+                     value="{% if event and event.date %}{{ event.date.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Location</label>
+              <input type="text" name="location" class="form-control"
+                     value="{{ event.location if event else '' }}"
+                     placeholder="e.g. MCUT Main Building Room 301">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Capacity</label>
+              <input type="number" name="capacity" class="form-control" min="0"
+                     value="{{ event.capacity if event else 0 }}"
+                     placeholder="0 = unlimited">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Registered Count</label>
+              <input type="number" name="registered_count" class="form-control" min="0"
+                     value="{{ event.registered_count if event else 0 }}">
+              <div class="form-text">Update this manually when the Google Form fills up.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Registration URL (Google Form) <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+              <input type="text" name="registration_url" class="form-control"
+                     value="{{ event.registration_url if event else '' }}"
+                     placeholder="https://forms.gle/...">
+            </div>
+
+            <div class="mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="is_published" id="is_published"
+                       {% if not event or event.is_published %}checked{% endif %}>
+                <label class="form-check-label" for="is_published">
+                  Published (visible to public)
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-lize w-100 mb-2">Save Event</button>
+            <a href="{{ url_for('staff.events') }}" class="btn w-100"
+               style="background:var(--off-white);color:var(--text-muted);">Cancel</a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Add a new "What to expect" row
+  document.getElementById('add-expect-btn').addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'd-flex gap-2 expect-item';
+    row.innerHTML = `
+      <input type="text" class="form-control expect-input" placeholder="e.g. A short activity you co-design">
+      <button type="button" class="btn btn-sm remove-expect-btn"
+              style="background:#fdf2f2;color:#e74c3c;border:none;padding:0 0.65rem;border-radius:8px;font-size:1.1rem;">✕</button>`;
+    document.getElementById('expect-list').appendChild(row);
+    row.querySelector('input').focus();
+  });
+
+  // Remove a row (event delegation)
+  document.getElementById('expect-list').addEventListener('click', e => {
+    if (e.target.classList.contains('remove-expect-btn')) {
+      const list = document.getElementById('expect-list');
+      // Always keep at least one row
+      if (list.querySelectorAll('.expect-item').length > 1) {
+        e.target.closest('.expect-item').remove();
+      } else {
+        e.target.closest('.expect-item').querySelector('input').value = '';
+      }
+    }
+  });
+
+  // Before submit — collect all inputs into the hidden JSON field
+  document.querySelector('form').addEventListener('submit', () => {
+    const items = Array.from(document.querySelectorAll('.expect-input'))
+      .map(i => i.value.trim())
+      .filter(v => v);
+    document.getElementById('desc_expect_input').value = JSON.stringify(items);
+  });
+</script>
+{% endblock %}

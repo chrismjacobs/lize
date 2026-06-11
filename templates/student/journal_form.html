@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}Write a Reflection{% endblock %}
+
+{% block content %}
+
+<section style="background:var(--navy);padding:2rem 1.5rem 1.5rem;color:#fff;">
+  <div class="container-lg">
+    <h2 style="font-weight:800;margin-bottom:0.25rem;">✍️ Write a Reflection</h2>
+    <p style="color:rgba(255,255,255,0.7);margin:0;">
+      Record your thoughts, audio, and photos after attending an event.
+    </p>
+  </div>
+</section>
+
+<section class="py-4">
+  <div class="container-lg">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <form id="journal-form" method="POST" action="{{ url_for('student.new_journal') }}"
+              enctype="multipart/form-data">
+
+          <!-- Event selector -->
+          <div class="lize-card p-4 mb-4">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:1rem;">Which event did you attend?</h5>
+            <select name="event_id" id="event-select" class="form-select" required>
+              <option value="" disabled {% if not selected_event %}selected{% endif %}>Select an event…</option>
+              {% for event in events %}
+                <option value="{{ event.id }}"
+                  {% if selected_event and selected_event.id == event.id %}selected{% endif %}>
+                  {{ event.title }}
+                  {% if event.date %} · {{ event.date.strftime('%b %d') }}{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+
+            <!-- Reflection prompts — shown when event is selected, updated via JS -->
+            <div id="prompt-box" class="prompt-list mt-3" style="display:none;">
+              <strong style="color:var(--navy);font-size:0.9rem;">💭 Prompts for this event:</strong>
+              <ol id="prompt-list" style="margin-top:0.5rem;"></ol>
+            </div>
+          </div>
+
+          <!-- Written reflection -->
+          <div class="lize-card p-4 mb-4">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">Written Reflection</h5>
+            <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">
+              Write about your experience. What surprised you? What did you feel? What will you remember?
+            </p>
+            <textarea name="written_reflection" class="form-control" rows="6"
+                      placeholder="Start writing here…"></textarea>
+          </div>
+
+          <!-- Audio recorder -->
+          <div class="lize-card p-4 mb-4">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">🎙 Audio Recording <span style="color:var(--text-muted);font-weight:400;font-size:0.85rem;">(optional)</span></h5>
+            <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">
+              Record yourself speaking about the experience — it only needs to be 1–2 minutes.
+            </p>
+            <div id="recorder-section">
+              <div class="d-flex align-items-center gap-3">
+                <button type="button" id="record-btn" title="Start / stop recording">🎙</button>
+                <div>
+                  <div id="record-status" style="font-size:0.9rem;color:var(--text-muted);">
+                    Tap to start recording
+                  </div>
+                  <div id="record-timer" style="font-size:1.1rem;font-weight:700;color:var(--coral);font-variant-numeric:tabular-nums;"></div>
+                </div>
+              </div>
+              <audio id="audio-preview" controls style="display:none;margin-top:1rem;width:100%;height:40px;"></audio>
+            </div>
+            <!-- Hidden input carries base64 audio — replaced with blob on submit via app.js -->
+            <input type="hidden" id="audio-data-input" name="audio_base64">
+          </div>
+
+          <!-- Photo upload -->
+          <div class="lize-card p-4 mb-4">
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">
+              📸 Photos <span style="color:var(--text-muted);font-weight:400;font-size:0.85rem;">(optional — up to {{ max_photos }})</span>
+            </h5>
+            <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">
+              Select up to {{ max_photos }} photos from the event. JPG or PNG, max 10 MB each.
+            </p>
+            <input type="file" id="photo-input" name="photos" class="form-control"
+                   accept="image/jpeg,image/png,image/webp" multiple>
+            <div id="photo-count-warning" style="display:none;color:#e74c3c;font-size:0.85rem;margin-top:0.4rem;">
+              Maximum {{ max_photos }} photos. Only the first {{ max_photos }} will be uploaded.
+            </div>
+            <!-- Photo preview thumbnails -->
+            <div id="photo-previews" class="gallery-grid mt-3" style="display:none;"></div>
+
+            <!-- Share toggle — only shown when photos are selected -->
+            <div id="share-photo-section" style="display:none;margin-top:1rem;">
+              <div class="p-3 rounded-3" style="background:var(--off-white);border:1.5px solid var(--border);">
+                <p style="font-weight:600;color:var(--navy);margin-bottom:0.5rem;">
+                  Would you like to share these photos in the event gallery?
+                </p>
+                <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.75rem;">
+                  If yes, OIA staff will review them before they appear publicly.
+                  No keeps them private — only you and staff can see them.
+                </p>
+                <div class="d-flex gap-3">
+                  <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                    <input type="radio" name="share_photos" value="yes"> Yes, share them
+                  </label>
+                  <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                    <input type="radio" name="share_photos" value="no" checked> No, keep them private
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Points preview -->
+          <div class="mb-4 p-3 rounded-3" style="background:var(--gold);color:var(--text-dark);">
+            <strong>Points for this entry:</strong>
+            10 base + 5 for photo + 5 for audio = up to <strong>20 points</strong>
+          </div>
+
+          <button type="submit" class="btn btn-lize btn-lg w-100">Save Reflection</button>
+          <a href="{{ url_for('student.dashboard') }}" class="btn w-100 mt-2"
+             style="background:var(--off-white);color:var(--text-muted);">Cancel</a>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Embed reflection prompts for all events so JS can show them on event select
+const eventPrompts = {
+  {% for event in events %}
+  {{ event.id }}: {{ event.reflection_prompts | tojson }},
+  {% endfor %}
+};
+
+document.getElementById('event-select').addEventListener('change', function () {
+  const id = parseInt(this.value);
+  const prompts = eventPrompts[id] || [];
+  const box = document.getElementById('prompt-box');
+  const list = document.getElementById('prompt-list');
+
+  if (prompts.length) {
+    list.innerHTML = prompts.map(p => `<li>${p}</li>`).join('');
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+});
+
+// Trigger on page load if event pre-selected
+window.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('event-select');
+  if (sel.value) sel.dispatchEvent(new Event('change'));
+});
+
+// Photo preview + count enforcement
+document.getElementById('photo-input').addEventListener('change', function () {
+  const MAX = {{ max_photos }};
+  const files = Array.from(this.files).slice(0, MAX);
+  const warning = document.getElementById('photo-count-warning');
+  const shareSection = document.getElementById('share-photo-section');
+  const previewBox = document.getElementById('photo-previews');
+
+  warning.style.display = this.files.length > MAX ? 'block' : 'none';
+  shareSection.style.display = files.length ? 'block' : 'none';
+  previewBox.style.display = files.length ? 'grid' : 'none';
+
+  previewBox.innerHTML = '';
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'gallery-img';
+      previewBox.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+});
+</script>
+{% endblock %}

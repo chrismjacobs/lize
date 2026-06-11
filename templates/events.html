@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Events{% endblock %}
+
+{% block content %}
+
+<section class="lize-hero" style="padding-bottom:2.5rem;">
+  <div class="container-lg">
+    <h1>Programme Activities</h1>
+    <p class="hero-sub">Browse all Li-Ze Academy events for this semester.</p>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container-lg">
+    {% if events %}
+    <div class="row g-4">
+      {% for event in events %}
+      <div class="col-md-6 col-lg-4">
+        <div class="lize-card h-100">
+          {% if event.hero_image_url %}
+            <img src="{{ event.hero_image_url }}" class="card-img-top" alt="{{ event.title }}">
+          {% else %}
+            <div class="card-img-placeholder">🗓</div>
+          {% endif %}
+          <div class="card-body d-flex flex-column">
+            <!-- Date + status badges -->
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              {% if event.date %}
+                <span class="badge rounded-pill badge-navy" style="font-size:0.7rem;">
+                  {{ event.date.strftime('%b %d, %Y') }}
+                </span>
+              {% endif %}
+              {% if event.spots_remaining == 0 %}
+                <span class="badge rounded-pill" style="background:#e74c3c;color:#fff;font-size:0.7rem;">Full</span>
+              {% elif event.spots_remaining is not none and event.spots_remaining <= 5 %}
+                <span class="badge rounded-pill badge-gold" style="font-size:0.7rem;">
+                  {{ event.spots_remaining }} left
+                </span>
+              {% endif %}
+            </div>
+
+            <h5 class="card-title">{{ event.title }}</h5>
+            <p class="card-text flex-grow-1">{{ event.short_description }}</p>
+
+            {% if event.location %}
+              <p class="mb-1" style="font-size:0.82rem;color:var(--text-muted);">
+                📍 {{ event.location }}
+              </p>
+            {% endif %}
+
+            {% if event.capacity %}
+              <div class="fill-bar-wrap mt-2">
+                <div class="fill-bar-label">
+                  {{ event.registered_count }} / {{ event.capacity }} registered
+                </div>
+                <div class="fill-bar">
+                  <div class="fill-bar-inner" data-pct="{{ event.fill_percent }}" style="width:0"></div>
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="d-flex gap-2 mt-3">
+              <a href="{{ url_for('public.event_detail', event_id=event.id) }}"
+                 class="btn btn-lize flex-grow-1">Details</a>
+              {% if event.registration_url %}
+                <a href="{{ event.registration_url }}" target="_blank" rel="noopener"
+                   class="btn btn-navy">Register</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <div style="font-size:3rem;">📅</div>
+      <h4 style="color:var(--navy);">No events scheduled yet</h4>
+      <p style="color:var(--text-muted);">Check back soon — this semester's activities will be posted here.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

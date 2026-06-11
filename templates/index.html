@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<section class="lize-hero">
+  <div class="container-lg">
+    <div class="d-inline-block px-3 py-1 rounded-pill mb-3"
+         style="background:rgba(244,200,66,0.2);color:var(--gold);font-size:0.85rem;font-weight:600;">
+      114學年下學期 · Spring Semester 2025
+    </div>
+    <h1>Global Competence &<br><span class="hero-accent">Cross-Cultural Cognition</span></h1>
+    <p class="hero-sub">
+      Li-Ze Academy connects international and local students at MCUT through shared
+      experiences, reflective journalling, and genuine friendship.
+    </p>
+    <div class="d-flex flex-wrap gap-3 justify-content-center">
+      <a href="{{ url_for('public.events') }}" class="btn btn-lize btn-lg">View Events</a>
+      {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-lize-outline btn-lg"
+           style="border-color:rgba(255,255,255,0.5);color:#fff;">Join the Programme</a>
+      {% else %}
+        <a href="{{ url_for('student.new_journal') }}" class="btn btn-lize-outline btn-lg"
+           style="border-color:rgba(255,255,255,0.5);color:#fff;">Write a Reflection</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- About blurb -->
+<section class="py-5 bg-white">
+  <div class="container-lg">
+    <div class="row align-items-center g-5">
+      <div class="col-md-6">
+        {% if page and page.content_html %}
+          {{ page.content_html | safe }}
+        {% else %}
+          <p>The <strong>Li-Ze Academy</strong> (麗澤書院) is an intercultural programme run by the
+          Office of International Affairs at MCUT, Taiwan, bringing together international and local
+          students through shared experiences.</p>
+        {% endif %}
+        <a href="{{ url_for('public.about') }}" class="btn btn-lize mt-2">Learn more</a>
+      </div>
+      <div class="col-md-6">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="p-3 rounded-3 text-center" style="background:var(--navy);color:#fff;">
+              <div style="font-size:2rem;">🌏</div>
+              <div style="font-weight:700;font-size:1.1rem;">10+</div>
+              <div style="font-size:0.8rem;opacity:0.75;">Nationalities</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 rounded-3 text-center" style="background:var(--coral);color:#fff;">
+              <div style="font-size:2rem;">📅</div>
+              <div style="font-weight:700;font-size:1.1rem;">10</div>
+              <div style="font-size:0.8rem;opacity:0.85;">Activities</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 rounded-3 text-center" style="background:var(--gold);color:var(--text-dark);">
+              <div style="font-size:2rem;">📓</div>
+              <div style="font-weight:700;font-size:1.1rem;">Journal</div>
+              <div style="font-size:0.8rem;">Every event</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 rounded-3 text-center" style="background:var(--off-white);color:var(--navy);">
+              <div style="font-size:2rem;">🏅</div>
+              <div style="font-weight:700;font-size:1.1rem;">Certificate</div>
+              <div style="font-size:0.8rem;color:var(--text-muted);">On completion</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured events -->
+{% if featured_events %}
+<section class="py-5">
+  <div class="container-lg">
+    <div class="mb-4">
+      <div class="section-label">Coming Up</div>
+      <div class="section-title">Upcoming Activities</div>
+    </div>
+    <div class="row g-4">
+      {% for event in featured_events %}
+      <div class="col-md-4">
+        <div class="lize-card h-100">
+          {% if event.hero_image_url %}
+            <img src="{{ event.hero_image_url }}" class="card-img-top" alt="{{ event.title }}">
+          {% else %}
+            <div class="card-img-placeholder">🗓</div>
+          {% endif %}
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              {% if event.date %}
+                <span class="badge rounded-pill badge-navy" style="font-size:0.7rem;">
+                  {{ event.date.strftime('%b %d') }}
+                </span>
+              {% endif %}
+              {% if event.spots_remaining == 0 %}
+                <span class="badge rounded-pill" style="background:#e74c3c;color:#fff;font-size:0.7rem;">Full</span>
+              {% elif event.spots_remaining is not none and event.spots_remaining <= 5 %}
+                <span class="badge rounded-pill badge-gold" style="font-size:0.7rem;">{{ event.spots_remaining }} spots left</span>
+              {% endif %}
+            </div>
+            <h5 class="card-title">{{ event.title }}</h5>
+            <p class="card-text flex-grow-1">{{ event.short_description }}</p>
+            {% if event.capacity %}
+              <div class="fill-bar-wrap mt-2">
+                <div class="fill-bar-label">{{ event.fill_percent }}% full · {{ event.spots_remaining or 0 }} spots remaining</div>
+                <div class="fill-bar">
+                  <div class="fill-bar-inner" data-pct="{{ event.fill_percent }}" style="width:0"></div>
+                </div>
+              </div>
+            {% endif %}
+            <a href="{{ url_for('public.event_detail', event_id=event.id) }}"
+               class="btn btn-lize-outline mt-3">View Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{{ url_for('public.events') }}" class="btn btn-navy">See All Events</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- How it works -->
+<section class="py-5 bg-white">
+  <div class="container-lg">
+    <div class="text-center mb-4">
+      <div class="section-label">How It Works</div>
+      <div class="section-title">Three steps to cross-cultural growth</div>
+    </div>
+    <div class="row g-4 text-center">
+      <div class="col-md-4">
+        <div class="p-4">
+          <div style="font-size:3rem;margin-bottom:0.75rem;">🎟</div>
+          <h5 style="color:var(--navy);font-weight:700;">1. Register for an event</h5>
+          <p style="color:var(--text-muted);">Browse the schedule, find activities that interest you, and register via Google Forms.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-4">
+          <div style="font-size:3rem;margin-bottom:0.75rem;">🌱</div>
+          <h5 style="color:var(--navy);font-weight:700;">2. Attend and experience</h5>
+          <p style="color:var(--text-muted);">Show up, take part, ask questions, and let yourself be surprised.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-4">
+          <div style="font-size:3rem;margin-bottom:0.75rem;">✍️</div>
+          <h5 style="color:var(--navy);font-weight:700;">3. Reflect in your journal</h5>
+          <p style="color:var(--text-muted);">Write, record audio, or upload a photo. Each entry earns points toward your completion certificate.</p>
+        </div>
+      </div>
+    </div>
+    {% if not current_user.is_authenticated %}
+    <div class="text-center mt-3">
+      <a href="{{ url_for('auth.register') }}" class="btn btn-lize btn-lg">Create Your Free Account</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

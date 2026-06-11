@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% block title %}QR Check-in Scanner{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height:calc(100vh - 56px);">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar d-none d-md-block" style="width:220px;flex-shrink:0;">
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-link" href="{{ url_for('staff.dashboard') }}"><span class="icon">📊</span> Dashboard</a>
+    <div class="sidebar-section">Manage</div>
+    <a class="nav-link" href="{{ url_for('staff.events') }}"><span class="icon">📅</span> Events</a>
+    <a class="nav-link" href="{{ url_for('staff.photo_queue') }}"><span class="icon">📸</span> Photo Queue</a>
+    <a class="nav-link" href="{{ url_for('staff.journals') }}"><span class="icon">📓</span> All Journals</a>
+    <div class="sidebar-section">Attendance</div>
+    <a class="nav-link active" href="{{ url_for('staff.scanner') }}"><span class="icon">📷</span> QR Scanner</a>
+    <div class="sidebar-section">Content</div>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='home') }}"><span class="icon">🏠</span> Home Page</a>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='about') }}"><span class="icon">ℹ️</span> About Page</a>
+  </nav>
+
+  <main class="flex-grow-1 p-4">
+
+    <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+      <h3 style="color:var(--navy);font-weight:800;margin:0;">QR Check-in Scanner</h3>
+      <span style="color:var(--text-muted);font-size:0.85rem;">
+        Point the camera at a student's QR code to check them in.
+      </span>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-pills mb-4 gap-2" id="scanner-tabs">
+      <li class="nav-item">
+        <button class="nav-link active" data-tab="qr">📷 QR Scanner</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-tab="manual">✋ Manual Check-in</button>
+      </li>
+    </ul>
+
+    <!-- ─── QR Scanner tab ─── -->
+    <div id="tab-qr">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="lize-card p-3">
+            <div id="reader" style="width:100%;border-radius:8px;overflow:hidden;min-height:200px;"></div>
+          </div>
+          <div id="scan-status" class="mt-2 text-center"
+               style="color:var(--text-muted);font-size:0.88rem;">
+            Starting camera…
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <h6 style="color:var(--navy);font-weight:700;margin-bottom:0.75rem;">
+            Recent Check-ins <span id="checkin-count"
+              style="background:var(--coral);color:#fff;border-radius:20px;
+                     padding:0.1rem 0.55rem;font-size:0.72rem;font-weight:600;margin-left:4px;">0</span>
+          </h6>
+          <div id="recent-list">
+            <p style="color:var(--text-muted);font-size:0.88rem;">No check-ins this session yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Manual Check-in tab ─── -->
+    <div id="tab-manual" style="display:none;">
+      <div class="row g-4">
+
+        <div class="col-md-6">
+          <div class="lize-card p-4">
+            <h6 style="color:var(--navy);font-weight:700;margin-bottom:1rem;">Check In a Student</h6>
+            <form method="POST" action="{{ url_for('staff.manual_checkin') }}">
+              <div class="mb-3">
+                <label class="form-label">Event</label>
+                <select name="event_id" class="form-select" required>
+                  <option value="">Select event…</option>
+                  {% for event in events %}
+                    <option value="{{ event.id }}">
+                      {{ event.title }}{% if event.date %} · {{ event.date.strftime('%b %d') }}{% endif %}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Student</label>
+                <select name="user_id" class="form-select" required>
+                  <option value="">Select student…</option>
+                  {% for s in students if s.role == 'student' %}
+                    <option value="{{ s.id }}">
+                      {{ s.name }}{% if s.nationality %} ({{ s.nationality }}){% endif %}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <button type="submit" class="btn btn-lize w-100">Check In Student</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="lize-card p-4">
+            <h6 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">Self Check-in (Testing)</h6>
+            <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">
+              Check yourself in to test the full QR flow.
+            </p>
+            <form method="POST" action="{{ url_for('staff.manual_checkin') }}">
+              <input type="hidden" name="user_id" value="{{ current_user.id }}">
+              <div class="mb-3">
+                <label class="form-label">Event</label>
+                <select name="event_id" class="form-select" required>
+                  <option value="">Select event…</option>
+                  {% for event in events %}
+                    <option value="{{ event.id }}">{{ event.title }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <button type="submit" class="btn btn-navy w-100">Check Me In</button>
+            </form>
+          </div>
+
+          <div class="lize-card p-4 mt-4">
+            <h6 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">Presenter Double-stamp</h6>
+            <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">
+              To award a presenter 2 stamps, check them in normally first, then find their
+              attendance record in the student's journal list and use the
+              <strong>Mark as Presenter</strong> button.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Scan result overlay -->
+<div id="scan-overlay" class="scanner-result-overlay" style="display:none;">
+  <div class="scanner-result-card" id="scan-card">
+    <div class="scan-icon" id="scan-icon">✓</div>
+    <h4 id="scan-name" style="margin:0.5rem 0 0.25rem;font-weight:700;"></h4>
+    <p id="scan-event" style="margin:0;opacity:0.85;font-size:0.9rem;"></p>
+    <p id="scan-stamps" style="margin:0.25rem 0 0;opacity:0.65;font-size:0.8rem;"></p>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+  const CHECKIN_URL = {{ url_for('staff.api_checkin') | tojson }};
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  document.querySelectorAll('[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-qr').style.display     = btn.dataset.tab === 'qr'     ? '' : 'none';
+      document.getElementById('tab-manual').style.display = btn.dataset.tab === 'manual' ? '' : 'none';
+    });
+  });
+
+  // ── QR Scanner ───────────────────────────────────────────────────────────
+  let cooldown      = false;
+  let recentList    = [];
+  let totalCount    = 0;
+
+  const html5QrCode = new Html5Qrcode("reader");
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 15, qrbox: { width: 280, height: 280 } },
+    onScanSuccess
+  ).then(() => {
+    document.getElementById('scan-status').textContent = "Scanning — show the student's QR code.";
+  }).catch(err => {
+    document.getElementById('scan-status').innerHTML =
+      `Camera error: ${err} — <a href="#" onclick="location.reload()">try again</a>`;
+  });
+
+  async function onScanSuccess(token) {
+    if (cooldown) return;
+    cooldown = true;
+    document.getElementById('scan-status').textContent = 'Processing…';
+
+    try {
+      const res  = await fetch(CHECKIN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json();
+      showResult(data);
+      logRecent(data);
+    } catch (_) {
+      showResult({ success: false, error: 'Network error — check your connection.' });
+    }
+
+    setTimeout(() => {
+      cooldown = false;
+      document.getElementById('scan-status').textContent = "Scanning — show the student's QR code.";
+    }, 3000);
+  }
+
+  function showResult(data) {
+    const overlay = document.getElementById('scan-overlay');
+    const card    = document.getElementById('scan-card');
+    const icon    = document.getElementById('scan-icon');
+    const nameEl  = document.getElementById('scan-name');
+    const eventEl = document.getElementById('scan-event');
+    const stamps  = document.getElementById('scan-stamps');
+
+    if (data.success) {
+      icon.textContent  = '✓';
+      nameEl.textContent = data.name;
+      eventEl.textContent = data.event;
+      stamps.textContent = `${data.stamp_count} stamp${data.stamp_count !== 1 ? 's' : ''} total`;
+      card.style.background = '#27ae60';
+    } else if (data.already) {
+      icon.textContent  = '⟳';
+      nameEl.textContent = data.name;
+      eventEl.textContent = data.event;
+      stamps.textContent = 'Already checked in';
+      card.style.background = '#e67e22';
+    } else {
+      icon.textContent  = '✕';
+      nameEl.textContent = 'Check-in failed';
+      eventEl.textContent = data.error || 'Unknown error';
+      stamps.textContent = '';
+      card.style.background = '#e74c3c';
+    }
+
+    overlay.style.display = 'flex';
+    setTimeout(() => { overlay.style.display = 'none'; }, 2500);
+  }
+
+  function logRecent(data) {
+    if (!data.success && !data.already) return;
+    totalCount++;
+    document.getElementById('checkin-count').textContent = totalCount;
+
+    const now  = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    recentList.unshift({ name: data.name, event: data.event, time, already: !!data.already });
+    if (recentList.length > 10) recentList.pop();
+
+    document.getElementById('recent-list').innerHTML = recentList.map(r => `
+      <div class="recent-item ${r.already ? 'already' : ''}">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span style="font-size:1rem;">${r.already ? '⟳' : '✓'}</span>
+          <span style="font-weight:600;color:var(--navy);flex:1;">${r.name}</span>
+          <span style="font-size:0.75rem;color:var(--text-muted);">${r.time}</span>
+        </div>
+        <div style="font-size:0.78rem;color:var(--text-muted);padding-left:1.6rem;">${r.event}</div>
+      </div>
+    `).join('');
+  }
+</script>
+{% endblock %}

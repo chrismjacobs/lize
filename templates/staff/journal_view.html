@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}All Student Journals{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height:calc(100vh - 56px);">
+
+  <nav class="admin-sidebar d-none d-md-block" style="width:220px;flex-shrink:0;">
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-link" href="{{ url_for('staff.dashboard') }}"><span class="icon">📊</span> Dashboard</a>
+    <div class="sidebar-section">Manage</div>
+    <a class="nav-link" href="{{ url_for('staff.events') }}"><span class="icon">📅</span> Events</a>
+    <a class="nav-link" href="{{ url_for('staff.photo_queue') }}"><span class="icon">📸</span> Photo Queue</a>
+    <a class="nav-link active" href="{{ url_for('staff.journals') }}"><span class="icon">📓</span> All Journals</a>
+    <div class="sidebar-section">Attendance</div>
+    <a class="nav-link" href="{{ url_for('staff.scanner') }}"><span class="icon">📷</span> QR Scanner</a>
+    <div class="sidebar-section">Content</div>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='home') }}"><span class="icon">🏠</span> Home Page</a>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='about') }}"><span class="icon">ℹ️</span> About Page</a>
+  </nav>
+
+  <main class="flex-grow-1 p-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+      <h3 style="color:var(--navy);font-weight:800;margin:0;">All Student Journals</h3>
+
+      <!-- Student filter -->
+      <form method="GET" class="d-flex gap-2 align-items-center">
+        <select name="student_id" class="form-select" style="max-width:220px;font-size:0.9rem;"
+                onchange="this.form.submit()">
+          <option value="">All students</option>
+          {% for student in students %}
+            <option value="{{ student.id }}"
+              {% if selected_student_id == student.id %}selected{% endif %}>
+              {{ student.name }}
+              {% if student.nationality %} ({{ student.nationality }}){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+        {% if selected_student_id %}
+          <a href="{{ url_for('staff.journals') }}" class="btn btn-sm"
+             style="background:var(--off-white);color:var(--text-muted);">Clear</a>
+        {% endif %}
+      </form>
+    </div>
+
+    {% if entries %}
+      {% for entry in entries %}
+      <div class="journal-entry mb-3">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <div class="entry-event">{{ entry.event.title }}</div>
+            <div class="entry-date">
+              {{ entry.author.name }}
+              {% if entry.author.nationality %} · {{ entry.author.nationality }}{% endif %}
+              · {{ entry.created_at.strftime('%B %d, %Y') }}
+            </div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <span class="badge rounded-pill badge-gold">{{ entry.points_awarded }} pts</span>
+            {% if entry.written_reflection %}
+              <span class="badge rounded-pill badge-muted">📝</span>
+            {% endif %}
+            {% if entry.audio_url %}
+              <span class="badge rounded-pill badge-muted">🎙</span>
+            {% endif %}
+            {% if entry.photos %}
+              <span class="badge rounded-pill badge-muted">
+                📸 {{ entry.photos | length }}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if entry.written_reflection %}
+          <div class="entry-text">{{ entry.written_reflection[:300] }}
+            {% if entry.written_reflection | length > 300 %}…{% endif %}
+          </div>
+        {% endif %}
+
+        {% if entry.photos %}
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            {% for photo in entry.photos %}
+              <img src="{{ photo.url }}" alt="Student photo"
+                   style="height:110px;width:110px;border-radius:8px;object-fit:cover;">
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if entry.audio_url %}
+          <div class="mt-2">
+            <audio controls src="{{ entry.audio_url }}" style="max-width:360px;height:36px;"></audio>
+          </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="text-center py-5"
+           style="background:var(--white);border-radius:var(--radius);border:2px dashed var(--border);">
+        <div style="font-size:3rem;">📓</div>
+        <h5 style="color:var(--navy);">No entries yet</h5>
+        <p style="color:var(--text-muted);">Student journal entries will appear here.</p>
+      </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

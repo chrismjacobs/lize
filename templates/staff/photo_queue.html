@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Photo Approval Queue{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height:calc(100vh - 56px);">
+
+  <nav class="admin-sidebar d-none d-md-block" style="width:220px;flex-shrink:0;">
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-link" href="{{ url_for('staff.dashboard') }}"><span class="icon">📊</span> Dashboard</a>
+    <div class="sidebar-section">Manage</div>
+    <a class="nav-link" href="{{ url_for('staff.events') }}"><span class="icon">📅</span> Events</a>
+    <a class="nav-link active" href="{{ url_for('staff.photo_queue') }}"><span class="icon">📸</span> Photo Queue</a>
+    <a class="nav-link" href="{{ url_for('staff.journals') }}"><span class="icon">📓</span> All Journals</a>
+    <div class="sidebar-section">Attendance</div>
+    <a class="nav-link" href="{{ url_for('staff.scanner') }}"><span class="icon">📷</span> QR Scanner</a>
+    <div class="sidebar-section">Content</div>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='home') }}"><span class="icon">🏠</span> Home Page</a>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='about') }}"><span class="icon">ℹ️</span> About Page</a>
+  </nav>
+
+  <main class="flex-grow-1 p-4">
+    <h3 style="color:var(--navy);font-weight:800;margin-bottom:0.5rem;">Photo Approval Queue</h3>
+    <p style="color:var(--text-muted);margin-bottom:1.5rem;">
+      Approve photos to add them to the public event gallery. Reject to keep them private.
+    </p>
+
+    {% if pending %}
+      <div class="row g-4">
+        {% for item in pending %}
+        <div class="col-md-6 col-lg-4">
+          <div class="lize-card overflow-hidden">
+            <img src="{{ item.photo.url }}" alt="Pending photo"
+                 style="width:100%;height:220px;object-fit:cover;">
+            <div class="p-3">
+              <div style="font-weight:700;color:var(--navy);">{{ item.entry.event.title }}</div>
+              <div style="font-size:0.83rem;color:var(--text-muted);">
+                By {{ item.entry.author.name }}
+                {% if item.entry.author.nationality %} ({{ item.entry.author.nationality }}){% endif %}
+                · {{ item.entry.created_at.strftime('%b %d') }}
+                {% if item.entry.photos | length > 1 %}
+                  · Photo {{ item.index + 1 }} of {{ item.entry.photos | length }}
+                {% endif %}
+              </div>
+              {% if item.entry.written_reflection %}
+                <p style="font-size:0.85rem;color:var(--text-dark);margin-top:0.5rem;font-style:italic;">
+                  "{{ item.entry.written_reflection[:120] }}{% if item.entry.written_reflection | length > 120 %}…{% endif %}"
+                </p>
+              {% endif %}
+              <div class="d-flex gap-2 mt-2">
+                <form method="POST"
+                      action="{{ url_for('staff.approve_photo', entry_id=item.entry.id, photo_index=item.index) }}"
+                      style="flex:1;">
+                  <button type="submit" class="btn btn-sm w-100"
+                          style="background:var(--success);color:#fff;border:none;font-weight:600;">
+                    ✓ Approve
+                  </button>
+                </form>
+                <form method="POST"
+                      action="{{ url_for('staff.reject_photo', entry_id=item.entry.id, photo_index=item.index) }}"
+                      style="flex:1;">
+                  <button type="submit" class="btn btn-sm w-100"
+                          style="background:#fdf2f2;color:#e74c3c;border:none;font-weight:600;">
+                    ✕ Reject
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-5"
+           style="background:var(--white);border-radius:var(--radius);border:2px dashed var(--border);">
+        <div style="font-size:3rem;">✅</div>
+        <h5 style="color:var(--navy);">Queue is empty</h5>
+        <p style="color:var(--text-muted);">No photos are waiting for review right now.</p>
+      </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}
