@@ -35,6 +35,17 @@ def create_app():
     def health():
         return jsonify({'status': 'ok'})
 
+    # Column migrations — safe to run on every startup; silently skipped if already applied
+    with app.app_context():
+        try:
+            db.session.execute(db.text(
+                "ALTER TABLE journal_entries "
+                "ADD COLUMN share_anonymous BOOLEAN DEFAULT FALSE"
+            ))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     return app
 
 
