@@ -15,16 +15,11 @@
       Li-Ze Academy connects international and local students at MCUT through shared
       experiences, reflective journalling, and genuine friendship.
     </p>
+    {% if not current_user.is_authenticated %}
     <div class="d-flex flex-wrap gap-3 justify-content-center">
-      <a href="{{ url_for('public.events') }}" class="btn btn-lize btn-lg">View Events</a>
-      {% if not current_user.is_authenticated %}
-        <a href="{{ url_for('auth.register') }}" class="btn btn-lize-outline btn-lg"
-           style="border-color:rgba(255,255,255,0.5);color:#fff;">Join the Programme</a>
-      {% else %}
-        <a href="{{ url_for('student.new_journal') }}" class="btn btn-lize-outline btn-lg"
-           style="border-color:rgba(255,255,255,0.5);color:#fff;">Write a Reflection</a>
-      {% endif %}
+      <a href="{{ url_for('auth.register') }}" class="btn btn-lize btn-lg">Join the Programme</a>
     </div>
+    {% endif %}
   </div>
 </section>
 

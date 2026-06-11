@@ -32,9 +32,7 @@ class User(UserMixin, db.Model):
 
     @property
     def total_points(self):
-        journal_pts = sum(e.points_awarded for e in self.journal_entries if e.points_awarded)
-        attendance_pts = sum(a.stamps * 5 for a in self.attendances)
-        return journal_pts + attendance_pts
+        return sum(a.stamps * 5 for a in self.attendances)
 
     @property
     def stamp_count(self):
