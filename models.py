@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='student')  # 'student' | 'staff'
     nationality = db.Column(db.String(80))
+    student_id = db.Column(db.String(8), unique=True, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     journal_entries = db.relationship('JournalEntry', backref='author', lazy=True)
@@ -169,3 +170,10 @@ class Page(db.Model):
     image_url = db.Column(db.String(500))
     last_updated_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AllowedStudent(db.Model):
+    __tablename__ = 'allowed_students'
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.String(8), unique=True, nullable=False)

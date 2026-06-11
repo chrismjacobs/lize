@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Allowed Student IDs{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height:calc(100vh - 56px);">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar d-none d-md-block" style="width:220px;flex-shrink:0;">
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-link" href="{{ url_for('staff.dashboard') }}"><span class="icon">📊</span> Dashboard</a>
+    <div class="sidebar-section">Manage</div>
+    <a class="nav-link" href="{{ url_for('staff.events') }}"><span class="icon">📅</span> Events</a>
+    <a class="nav-link" href="{{ url_for('staff.photo_queue') }}"><span class="icon">📸</span> Photo Queue</a>
+    <a class="nav-link" href="{{ url_for('staff.journals') }}"><span class="icon">📓</span> All Journals</a>
+    <a class="nav-link active" href="{{ url_for('staff.allowed_students') }}"><span class="icon">🎓</span> Student IDs</a>
+    <div class="sidebar-section">Attendance</div>
+    <a class="nav-link" href="{{ url_for('staff.scanner') }}"><span class="icon">📷</span> QR Scanner</a>
+    <div class="sidebar-section">Content</div>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='home') }}"><span class="icon">🏠</span> Home Page</a>
+    <a class="nav-link" href="{{ url_for('staff.edit_page', slug='about') }}"><span class="icon">ℹ️</span> About Page</a>
+  </nav>
+
+  <main class="flex-grow-1 p-4">
+    <h3 style="color:var(--navy);font-weight:800;margin-bottom:0.25rem;">🎓 Allowed Student IDs</h3>
+    <p style="color:var(--text-muted);margin-bottom:2rem;">
+      Only students whose ID is on this list can create an account.
+      Paste the full list each time you update it — the old list is replaced.
+    </p>
+
+    <div class="row g-4">
+
+      <!-- Paste / update list -->
+      <div class="col-lg-6">
+        <div class="lize-card p-4">
+          <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">Update the list</h5>
+          <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">
+            Paste your student IDs below — one per line, or separated by spaces or commas.
+            Any non-8-digit values are ignored. This <strong>replaces</strong> the current list.
+          </p>
+          <form method="POST" action="{{ url_for('staff.allowed_students') }}">
+            <textarea name="student_ids" class="form-control mb-3" rows="12"
+                      placeholder="11223344&#10;55667788&#10;99001122&#10;…"
+                      style="font-family:monospace;font-size:0.9rem;">{% for a in allowed %}{{ a.student_id }}
+{% endfor %}</textarea>
+            <button type="submit" class="btn btn-lize w-100">Save List</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Current list -->
+      <div class="col-lg-6">
+        <div class="lize-card p-4">
+          <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.25rem;">
+            Current list
+            <span style="font-size:0.85rem;color:var(--text-muted);font-weight:400;">
+              — {{ allowed | length }} ID{{ 's' if allowed | length != 1 }}
+            </span>
+          </h5>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">
+            Green = already registered an account. Grey = not yet.
+          </p>
+          {% if allowed %}
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+              {% for a in allowed %}
+                <span style="font-family:monospace;font-size:0.85rem;padding:0.25rem 0.65rem;
+                             border-radius:6px;
+                             {% if a.student_id in registered_ids %}
+                               background:#d4f8e4;color:#1a7840;
+                             {% else %}
+                               background:var(--off-white);color:var(--text-muted);
+                             {% endif %}">
+                  {{ a.student_id }}
+                </span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p style="color:var(--text-muted);">No IDs saved yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+{% endblock %}

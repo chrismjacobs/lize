@@ -14,9 +14,16 @@
 
       <form method="POST" action="{{ url_for('auth.register') }}">
         <div class="mb-3">
+          <label class="form-label" for="student_id">Student ID</label>
+          <input type="text" id="student_id" name="student_id" class="form-control"
+                 placeholder="8-digit student number" required autofocus
+                 pattern="\d{8}" maxlength="8" inputmode="numeric">
+          <div class="form-text">Your 8-digit MCUT student ID number.</div>
+        </div>
+        <div class="mb-3">
           <label class="form-label" for="name">Full name</label>
           <input type="text" id="name" name="name" class="form-control"
-                 placeholder="Your full name" required autofocus>
+                 placeholder="Your full name" required>
         </div>
         <div class="mb-3">
           <label class="form-label" for="email">Email address</label>

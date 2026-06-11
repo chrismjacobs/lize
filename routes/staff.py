@@ -3,7 +3,8 @@ from functools import wraps
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
-from models import db, User, Event, JournalEntry, Page, Attendance
+import re
+from models import db, User, Event, JournalEntry, Page, Attendance, AllowedStudent
 from s3_utils import upload_file_to_s3, delete_s3_file
 from checkin_utils import verify_token
 
@@ -338,3 +339,26 @@ def mark_presenter(attendance_id):
     db.session.commit()
     flash(f'Presenter double-stamp added for {record.user.name}.', 'success')
     return redirect(request.referrer or url_for('staff.scanner'))
+
+
+# ── Allowed students ───────────────────────────────────────────────────────────
+
+@staff_bp.route('/allowed-students', methods=['GET', 'POST'])
+@login_required
+@staff_required
+def allowed_students():
+    if request.method == 'POST':
+        raw = request.form.get('student_ids', '')
+        ids = list(set(re.findall(r'\b\d{8}\b', raw)))
+        AllowedStudent.query.delete()
+        for sid in ids:
+            db.session.add(AllowedStudent(student_id=sid))
+        db.session.commit()
+        flash(f'{len(ids)} student ID{"s" if len(ids) != 1 else ""} saved.', 'success')
+        return redirect(url_for('staff.allowed_students'))
+
+    allowed = AllowedStudent.query.order_by(AllowedStudent.student_id).all()
+    registered_ids = {u.student_id for u in User.query.filter(User.student_id != None).all()}
+    return render_template('staff/allowed_students.html',
+                           allowed=allowed,
+                           registered_ids=registered_ids)
