@@ -8,6 +8,10 @@ from models import db, User
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'pool_recycle': 280,
+    }
 
     db.init_app(app)
     Migrate(app, db)
