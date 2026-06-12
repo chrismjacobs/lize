@@ -112,6 +112,10 @@ def _save_event(event):
     prompts_raw = request.form.get('reflection_prompts', '')
     event.reflection_prompts = [p.strip() for p in prompts_raw.splitlines() if p.strip()]
 
+    # Per-event student enrollment list (empty = open to all)
+    enrolled_raw = request.form.get('enrolled_student_ids', '')
+    event.enrolled_student_ids = list(set(re.findall(r'\b\d{8}\b', enrolled_raw)))
+
     # Chinese version (all optional)
     event.title_zh = request.form.get('title_zh', '').strip() or None
     event.short_description_zh = request.form.get('short_description_zh', '').strip() or None

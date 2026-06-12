@@ -5,21 +5,36 @@
 
 {% if attended %}
 
-<!-- Already checked in — show static stamp -->
+<!-- Already checked in — show pending or complete stamp -->
 <div class="checkin-bg">
   <div class="checkin-card text-center">
-    <div class="stamp-ink stamp-static mb-4">
-      <div class="stamp-inner">
-        <div class="stamp-top">LI-ZE</div>
-        <div class="stamp-check">✓</div>
-        <div class="stamp-bottom">CHECKED IN</div>
+    {% if journaled %}
+      <div class="stamp-ink stamp-static mb-4">
+        <div class="stamp-inner">
+          <div class="stamp-top">LI-ZE</div>
+          <div class="stamp-check">✓</div>
+          <div class="stamp-bottom">COMPLETE</div>
+        </div>
       </div>
-    </div>
-    <h4 style="color:var(--navy);font-weight:700;margin-bottom:0.25rem;">You're checked in!</h4>
-    <p style="color:var(--text-muted);">{{ event.title }}</p>
+      <h4 style="color:var(--navy);font-weight:700;margin-bottom:0.25rem;">Stamp complete!</h4>
+      <p style="color:var(--text-muted);">{{ event.title }}</p>
+    {% else %}
+      <div class="stamp-ink stamp-static stamp-pending mb-4">
+        <div class="stamp-inner">
+          <div class="stamp-top">LI-ZE</div>
+          <div class="stamp-check" style="font-size:1.8rem;letter-spacing:-0.05em;">···</div>
+          <div class="stamp-bottom">REFLECT</div>
+        </div>
+      </div>
+      <h4 style="color:var(--navy);font-weight:700;margin-bottom:0.25rem;">Checked in!</h4>
+      <p style="color:var(--text-muted);margin-bottom:0.25rem;">{{ event.title }}</p>
+      <p style="color:var(--text-muted);font-size:0.85rem;">Write your reflection to complete your stamp.</p>
+    {% endif %}
     <div class="d-flex gap-2 justify-content-center mt-3 flex-wrap">
-      <a href="{{ url_for('student.new_journal', event_id=event.id) }}"
-         class="btn btn-lize">Write My Reflection ✍️</a>
+      {% if not journaled %}
+        <a href="{{ url_for('student.new_journal', event_id=event.id) }}"
+           class="btn btn-lize">Write My Reflection ✍️</a>
+      {% endif %}
       <a href="{{ url_for('student.dashboard') }}" class="btn btn-navy">Back to Dashboard</a>
     </div>
   </div>
@@ -91,19 +106,20 @@
 <div id="stamp-overlay" class="stamp-overlay">
   <div style="position:relative;width:200px;height:200px;margin-bottom:1.5rem;">
     <div class="ink-ripple" id="ink-ripple"></div>
-    <div class="stamp-ink" id="stamp-ink">
+    <div class="stamp-ink stamp-pending" id="stamp-ink">
       <div class="stamp-inner">
         <div class="stamp-top">LI-ZE</div>
-        <div class="stamp-check">✓</div>
+        <div class="stamp-check" style="font-size:1.8rem;letter-spacing:-0.05em;">···</div>
         <div class="stamp-bottom">CHECKED IN</div>
       </div>
     </div>
   </div>
   <h3 id="stamp-name" style="color:#fff;font-weight:700;margin:0;"></h3>
   <p style="color:rgba(255,255,255,0.65);margin:0.35rem 0 0;">{{ event.title }}</p>
-  <a href="{{ url_for('student.dashboard') }}"
+  <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin:0.25rem 0 0;">Write your reflection to complete your stamp</p>
+  <a href="{{ url_for('student.new_journal', event_id=event.id) }}"
      id="stamp-btn"
-     class="btn btn-lize mt-3" style="display:none;">Go to Dashboard</a>
+     class="btn btn-lize mt-3" style="display:none;">Write My Reflection ✍️</a>
 </div>
 
 {% endif %}

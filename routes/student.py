@@ -26,7 +26,15 @@ def dashboard():
                .all())
     journaled_ids = {e.event_id for e in entries}
 
-    stamp_count = sum(a.stamps for a in attended_records)
+    complete_stamps = sum(a.stamps for a in attended_records if a.event_id in journaled_ids)
+    pending_stamps  = sum(a.stamps for a in attended_records if a.event_id not in journaled_ids)
+    stamp_count = complete_stamps + pending_stamps
+
+    sid = current_user.student_id or ''
+    enrolled_ids = {
+        e.id for e in all_events
+        if not e.enrolled_student_ids or sid in e.enrolled_student_ids
+    }
 
     return render_template(
         'student/dashboard.html',
@@ -36,7 +44,10 @@ def dashboard():
         entries=entries,
         journaled_ids=journaled_ids,
         stamp_count=stamp_count,
+        complete_stamps=complete_stamps,
+        pending_stamps=pending_stamps,
         total_points=current_user.total_points,
+        enrolled_ids=enrolled_ids,
     )
 
 
@@ -48,9 +59,15 @@ def checkin_qr(event_id):
     event = Event.query.get_or_404(event_id)
     if not event.is_published:
         abort(404)
+    ids = event.enrolled_student_ids
+    if ids and current_user.student_id not in ids:
+        flash('You are not enrolled in this event.', 'warning')
+        return redirect(url_for('student.dashboard'))
     attended = bool(Attendance.query.filter_by(
         user_id=current_user.id, event_id=event_id).first())
-    return render_template('student/checkin_qr.html', event=event, attended=attended)
+    journaled = attended and bool(JournalEntry.query.filter_by(
+        user_id=current_user.id, event_id=event_id).first())
+    return render_template('student/checkin_qr.html', event=event, attended=attended, journaled=journaled)
 
 
 @student_bp.route('/api/checkin-token/<int:event_id>')
@@ -136,6 +153,11 @@ def new_journal():
             except Exception as e:
                 flash(f'Audio upload failed: {e}', 'warning')
 
+        if not photos and not current_user.is_staff:
+            flash('Please include at least one photo in your reflection.', 'warning')
+            return render_template('student/journal_form.html', events=events,
+                                   selected_event=event, max_photos=MAX_PHOTOS)
+
         # Points: 10 base + 5 photos + 5 audio
         points = 10
         if photos:
@@ -199,7 +221,7 @@ def edit_journal(entry_id):
         # Add new photos (append to existing, cap at MAX_PHOTOS total)
         share_photos = request.form.get('share_photos') == 'yes'
         photo_files = request.files.getlist('photos')
-        existing = entry.photos
+        existing = entry.photos or []
         new_photos = []
         slots_left = MAX_PHOTOS - len(existing)
         for pf in photo_files[:max(slots_left, 0)]:
@@ -210,8 +232,15 @@ def edit_journal(entry_id):
                     new_photos.append({'url': url, 'visibility': visibility})
                 except Exception as e:
                     flash(f'One photo failed to upload: {e}', 'warning')
+
+        all_photos = existing + new_photos
+        if not all_photos and not current_user.is_staff:
+            flash('Your reflection must include at least one photo.', 'warning')
+            return render_template('student/journal_form.html', entry=entry,
+                                   events=[entry.event], max_photos=MAX_PHOTOS)
+
         if new_photos:
-            entry.photos = existing + new_photos
+            entry.photos = all_photos
 
         # New audio replaces old
         audio = request.files.get('audio')

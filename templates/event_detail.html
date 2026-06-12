@@ -81,8 +81,8 @@
         {% endif %}
 
         <!-- Photo gallery -->
-        {% set all_photos = ([event.hero_image_url] if event.hero_image_url else []) + event.gallery_images + event.approved_student_photos %}
-        {% if all_photos | length > 1 %}
+        {% set all_photos = event.gallery_images + event.approved_student_photos %}
+        {% if all_photos %}
         <div class="mb-4">
           <h5 style="color:var(--navy);font-weight:700;">📸 Gallery</h5>
           <div class="gallery-grid">

@@ -476,6 +476,14 @@ a:hover { color: var(--coral-dark); text-decoration: underline; }
 
 .stamp-slot.stamped:hover { transform: scale(1.08); }
 
+.stamp-slot.pending {
+  background: var(--gold);
+  border: 2px solid #c9a000;
+  box-shadow: 0 4px 14px rgba(244,200,66,0.45);
+}
+
+.stamp-slot.pending:hover { transform: scale(1.08); }
+
 @keyframes stamp-appear {
   0%   { transform: scale(0.55) rotate(-8deg); opacity: 0; }
   65%  { transform: scale(1.06) rotate(2deg);  opacity: 1; }
@@ -622,6 +630,11 @@ a:hover { color: var(--coral-dark); text-decoration: underline; }
   border: 4px solid var(--coral-dark);
   margin: 0 auto;
 }
+
+.stamp-ink.stamp-pending {
+  background: var(--gold);
+  border-color: #c9a000;
+}
 .stamp-ink.animate {
   animation: stamp-drop 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }
@@ -654,6 +667,7 @@ a:hover { color: var(--coral-dark); text-decoration: underline; }
   border-radius: 50%;
   border: 3px solid var(--coral);
   opacity: 0;
+  pointer-events: none;
 }
 .ink-ripple.animate {
   animation: ripple-out 1.2s ease-out 0.35s both;

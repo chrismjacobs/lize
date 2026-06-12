@@ -33,7 +33,8 @@ class User(UserMixin, db.Model):
 
     @property
     def total_points(self):
-        return sum(a.stamps * 5 for a in self.attendances)
+        journaled_ids = {e.event_id for e in self.journal_entries}
+        return sum(a.stamps * 5 for a in self.attendances if a.event_id in journaled_ids)
 
     @property
     def stamp_count(self):
@@ -57,6 +58,9 @@ class Event(db.Model):
     _reflection_prompts = db.Column('reflection_prompts', db.Text, default='[]')
     is_published = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Per-event student enrollment (empty = all students can participate)
+    _enrolled_student_ids = db.Column('enrolled_student_ids', db.Text, default='[]')
 
     # Chinese versions (all optional)
     title_zh = db.Column(db.String(200))
@@ -110,6 +114,17 @@ class Event(db.Model):
     @reflection_prompts_zh.setter
     def reflection_prompts_zh(self, value):
         self._reflection_prompts_zh = json.dumps(value, ensure_ascii=False)
+
+    @property
+    def enrolled_student_ids(self):
+        try:
+            return json.loads(self._enrolled_student_ids or '[]')
+        except Exception:
+            return []
+
+    @enrolled_student_ids.setter
+    def enrolled_student_ids(self, value):
+        self._enrolled_student_ids = json.dumps(value or [])
 
     @property
     def spots_remaining(self):

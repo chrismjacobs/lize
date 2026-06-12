@@ -22,21 +22,24 @@
     <!-- 6 stamp slots -->
     <div class="passbook-row">
       {% for i in range(6) %}
-        {% set filled = i < stamp_count %}
-        <div class="stamp-slot {{ 'stamped' if filled else '' }}"
-             style="animation-delay:{{ i * 0.08 }}s;">
-          {% if filled %}
+        {% if i < complete_stamps %}
+          <div class="stamp-slot stamped" style="animation-delay:{{ i * 0.08 }}s;">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"
                  stroke-linecap="round" stroke-linejoin="round"
                  style="width:28px;height:28px;">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
-          {% else %}
-            <span style="color:rgba(255,255,255,0.22);font-size:1.2rem;font-weight:700;">
-              {{ i + 1 }}
-            </span>
-          {% endif %}
-        </div>
+          </div>
+        {% elif i < complete_stamps + pending_stamps %}
+          <div class="stamp-slot pending" style="animation-delay:{{ i * 0.08 }}s;"
+               title="Checked in — write your reflection to complete this stamp">
+            <span style="color:rgba(0,0,0,0.55);font-size:1.25rem;font-weight:800;letter-spacing:-0.1em;">···</span>
+          </div>
+        {% else %}
+          <div class="stamp-slot" style="animation-delay:{{ i * 0.08 }}s;">
+            <span style="color:rgba(255,255,255,0.22);font-size:1.2rem;font-weight:700;">{{ i + 1 }}</span>
+          </div>
+        {% endif %}
       {% endfor %}
       {% if stamp_count > 6 %}
         <div style="color:rgba(255,255,255,0.55);font-size:0.82rem;align-self:center;margin-left:0.25rem;">
@@ -48,17 +51,19 @@
     <!-- Progress row -->
     <div class="mt-3 d-flex flex-wrap align-items-center gap-3">
       <span style="color:rgba(255,255,255,0.75);font-size:0.88rem;">
-        {{ stamp_count }}/6 stamps
-        {% if stamp_count >= 6 %}
+        {{ complete_stamps }}/6 stamps complete
+        {% if complete_stamps >= 6 %}
           · <strong style="color:var(--gold);">Programme complete 🎓</strong>
+        {% elif pending_stamps %}
+          · <span style="color:var(--gold);">{{ pending_stamps }} awaiting reflection</span>
         {% else %}
-          · {{ 6 - stamp_count }} stamp{{ 's' if (6 - stamp_count) != 1 }} to go
+          · {{ 6 - complete_stamps }} to go
         {% endif %}
       </span>
       <div style="flex:1;max-width:180px;">
         <div style="height:5px;background:rgba(255,255,255,0.15);border-radius:3px;overflow:hidden;">
           <div style="height:100%;background:var(--coral);border-radius:3px;
-                      width:{{ [stamp_count * 100 // 6, 100] | min }}%;"></div>
+                      width:{{ [complete_stamps * 100 // 6, 100] | min }}%;"></div>
         </div>
       </div>
     </div>
@@ -81,6 +86,7 @@
         {% for event in all_events %}
           {% set attended = event.id in attended_ids %}
           {% set journaled = event.id in journaled_ids %}
+          {% set enrolled = event.id in enrolled_ids %}
           {% set card_state = 'complete' if (attended and journaled) else ('checked-in' if attended else '') %}
           <div class="col-sm-6 col-lg-4">
             <div class="event-status-card {{ card_state }}">
@@ -109,9 +115,12 @@
                 {% elif attended %}
                   <a href="{{ url_for('student.new_journal', event_id=event.id) }}"
                      class="btn btn-sm btn-lize">Write Reflection ✍️</a>
-                {% else %}
+                {% elif enrolled %}
                   <a href="{{ url_for('student.checkin_qr', event_id=event.id) }}"
                      class="btn btn-sm btn-qr-show">Show My QR</a>
+                  <a href="{{ url_for('public.event_detail', event_id=event.id) }}"
+                     class="btn btn-sm btn-event-details">Details</a>
+                {% else %}
                   <a href="{{ url_for('public.event_detail', event_id=event.id) }}"
                      class="btn btn-sm btn-event-details">Details</a>
                 {% endif %}

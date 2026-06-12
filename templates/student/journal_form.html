@@ -5,16 +5,28 @@
 
 <section style="background:var(--navy);padding:2rem 1.5rem 1.5rem;color:#fff;">
   <div class="container-lg">
-    <h2 style="font-weight:800;margin-bottom:0.25rem;">
-      {% if entry %}✏️ Edit Reflection{% else %}✍️ Write a Reflection{% endif %}
-    </h2>
-    <p style="color:rgba(255,255,255,0.7);margin:0;">
-      {% if entry %}
-        Update your thoughts, audio, or photos for this event.
-      {% else %}
-        Record your thoughts, audio, and photos after attending an event.
-      {% endif %}
-    </p>
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div>
+        <h2 style="font-weight:800;margin-bottom:0.25rem;">
+          {% if entry %}✏️ Edit Reflection{% else %}✍️ Write a Reflection{% endif %}
+        </h2>
+        <p style="color:rgba(255,255,255,0.7);margin:0;">
+          {% if entry %}
+            {% if lang == 'zh' %}更新您的反思內容、語音或照片。{% else %}Update your thoughts, audio, or photos for this event.{% endif %}
+          {% else %}
+            {% if lang == 'zh' %}記錄您在活動後的心得、語音和照片。{% else %}Record your thoughts, audio, and photos after attending an event.{% endif %}
+          {% endif %}
+        </p>
+      </div>
+      <div class="d-flex align-items-center gap-1 flex-shrink-0 mt-1">
+        <a href="{{ url_for('public.set_lang', lang='en') }}"
+           class="btn btn-sm {% if lang != 'zh' %}btn-lize{% else %}btn-outline-light{% endif %}"
+           style="font-size:0.75rem;padding:0.2rem 0.55rem;min-width:2rem;opacity:{% if lang != 'zh' %}1{% else %}0.6{% endif %};">EN</a>
+        <a href="{{ url_for('public.set_lang', lang='zh') }}"
+           class="btn btn-sm {% if lang == 'zh' %}btn-lize{% else %}btn-outline-light{% endif %}"
+           style="font-size:0.75rem;padding:0.2rem 0.55rem;min-width:2.5rem;opacity:{% if lang == 'zh' %}1{% else %}0.6{% endif %};">中文</a>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -60,7 +72,7 @@
           <div class="lize-card p-4 mb-4">
             <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">Written Reflection</h5>
             <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">
-              Write about your experience. What surprised you? What did you feel? What will you remember?
+              {% if lang == 'zh' %}寫下您的體驗。有什麼讓您驚訝的？您的感受是什麼？您最想記住什麼？{% else %}Write about your experience. What surprised you? What did you feel? What will you remember?{% endif %}
             </p>
             <textarea name="written_reflection" class="form-control" rows="6"
                       placeholder="Start writing here…">{% if entry and entry.written_reflection %}{{ entry.written_reflection }}{% endif %}</textarea>
@@ -75,7 +87,7 @@
               <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">Record below to replace it.</p>
             {% else %}
               <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">
-                Record yourself speaking about the experience — it only needs to be 1–2 minutes.
+                {% if lang == 'zh' %}錄下您對這次體驗的描述——只需1至2分鐘即可。{% else %}Record yourself speaking about the experience — it only needs to be 1–2 minutes.{% endif %}
               </p>
             {% endif %}
             <div id="recorder-section">
@@ -94,10 +106,17 @@
           </div>
 
           <!-- Photo upload -->
-          <div class="lize-card p-4 mb-4">
+          <div class="lize-card p-4 mb-4" id="photo-card">
             <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">
-              📸 Photos <span style="color:var(--text-muted);font-weight:400;font-size:0.85rem;">(optional — up to {{ max_photos }})</span>
+              📸 Photo <span style="color:var(--coral);font-weight:700;">*</span>
+              <span style="color:var(--text-muted);font-weight:400;font-size:0.85rem;">
+                (at least one required — up to {{ max_photos }})
+              </span>
             </h5>
+            <div id="photo-required-msg"
+                 style="display:none;color:var(--coral);font-size:0.88rem;font-weight:600;margin-bottom:0.5rem;">
+              Please add at least one photo to your reflection.
+            </div>
 
             {% if entry and entry.photos %}
               <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.5rem;">Current photos:</p>
@@ -116,7 +135,7 @@
               {% endif %}
             {% else %}
               <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">
-                Select up to {{ max_photos }} photos from the event. JPG or PNG, max 10 MB each.
+                {% if lang == 'zh' %}從活動中選擇最多 {{ max_photos }} 張照片。支援 JPG 或 PNG，每張最大 10 MB。{% else %}Select up to {{ max_photos }} photos from the event. JPG or PNG, max 10 MB each.{% endif %}
               </p>
             {% endif %}
 
@@ -132,18 +151,17 @@
               <div id="share-photo-section" style="display:none;margin-top:1rem;">
                 <div class="p-3 rounded-3" style="background:var(--off-white);border:1.5px solid var(--border);">
                   <p style="font-weight:600;color:var(--navy);margin-bottom:0.5rem;">
-                    Would you like to share these photos in the event gallery?
+                    {% if lang == 'zh' %}您想將這些照片分享到活動相冊嗎？{% else %}Would you like to share these photos in the event gallery?{% endif %}
                   </p>
                   <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.75rem;">
-                    If yes, OIA staff will review them before they appear publicly.
-                    No keeps them private — only you and staff can see them.
+                    {% if lang == 'zh' %}選擇「是」後，OIA工作人員會審核後再公開展示。選擇「否」則保持私人，只有您和工作人員可以看到。{% else %}If yes, OIA staff will review them before they appear publicly. No keeps them private — only you and staff can see them.{% endif %}
                   </p>
                   <div class="d-flex gap-3">
                     <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-                      <input type="radio" name="share_photos" value="yes"> Yes, share them
+                      <input type="radio" name="share_photos" value="yes" checked> {% if lang == 'zh' %}是，分享{% else %}Yes, share them{% endif %}
                     </label>
                     <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-                      <input type="radio" name="share_photos" value="no" checked> No, keep them private
+                      <input type="radio" name="share_photos" value="no"> {% if lang == 'zh' %}否，保持私人{% else %}No, keep them private{% endif %}
                     </label>
                   </div>
                 </div>
@@ -153,14 +171,16 @@
 
           <!-- Share anonymously -->
           <div class="lize-card p-4 mb-4">
-            <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">Share anonymously</h5>
+            <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">
+              {% if lang == 'zh' %}匿名分享{% else %}Share anonymously{% endif %}
+            </h5>
             <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">
-              Allow your written reflection to appear on the event page so future participants can read real student experiences. Your name is never shown.
+              {% if lang == 'zh' %}允許您的反思以匿名方式出現在活動頁面上，讓未來的參與者閱讀真實的學生心得。您的姓名不會顯示。{% else %}Allow your written reflection to appear on the event page so future participants can read real student experiences. Your name is never shown.{% endif %}
             </p>
             <label class="d-flex align-items-start gap-2" style="cursor:pointer;">
               <input type="checkbox" name="share_anonymous" value="1" class="mt-1"
-                     {% if entry and entry.share_anonymous %}checked{% endif %}>
-              <span>I'm happy for my reflection to appear anonymously on the event page</span>
+                     {% if not entry or entry.share_anonymous %}checked{% endif %}>
+              <span>{% if lang == 'zh' %}我願意讓我的反思以匿名形式出現在活動頁面{% else %}I'm happy for my reflection to appear anonymously on the event page{% endif %}</span>
             </label>
           </div>
 
@@ -207,6 +227,21 @@ window.addEventListener('DOMContentLoaded', () => {
   if (sel && sel.value) showPrompts(parseInt(sel.value));
   {% if entry %}
   showPrompts({{ entry.event_id }});
+  {% endif %}
+});
+
+// Require at least one photo on submit
+document.getElementById('journal-form').addEventListener('submit', function(e) {
+  {% if not (entry and entry.photos) %}
+  const fileInput = document.getElementById('photo-input');
+  if (!fileInput || fileInput.files.length === 0) {
+    e.preventDefault();
+    const msg = document.getElementById('photo-required-msg');
+    if (msg) {
+      msg.style.display = 'block';
+      msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
   {% endif %}
 });
 
