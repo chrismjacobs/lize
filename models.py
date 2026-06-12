@@ -58,6 +58,12 @@ class Event(db.Model):
     is_published = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Chinese versions (all optional)
+    title_zh = db.Column(db.String(200))
+    short_description_zh = db.Column(db.Text)
+    full_description_zh = db.Column(db.Text)
+    _reflection_prompts_zh = db.Column('reflection_prompts_zh', db.Text, default='[]')
+
     journal_entries = db.relationship('JournalEntry', backref='event', lazy=True)
 
     @property
@@ -86,6 +92,24 @@ class Event(db.Model):
     @reflection_prompts.setter
     def reflection_prompts(self, value):
         self._reflection_prompts = json.dumps(value)
+
+    @property
+    def description_data_zh(self):
+        val = (self.full_description_zh or '').strip()
+        if val.startswith('{'):
+            try:
+                return json.loads(val)
+            except Exception:
+                pass
+        return None
+
+    @property
+    def reflection_prompts_zh(self):
+        return json.loads(self._reflection_prompts_zh or '[]')
+
+    @reflection_prompts_zh.setter
+    def reflection_prompts_zh(self, value):
+        self._reflection_prompts_zh = json.dumps(value, ensure_ascii=False)
 
     @property
     def spots_remaining(self):
@@ -168,6 +192,7 @@ class Page(db.Model):
     title = db.Column(db.String(200))
     content_html = db.Column(db.Text)
     image_url = db.Column(db.String(500))
+    content_html_zh = db.Column(db.Text)
     last_updated_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

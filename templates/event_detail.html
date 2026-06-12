@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}{{ event.title }}{% endblock %}
+{% block title %}{{ event.title_zh if lang == 'zh' and event.title_zh else event.title }}{% endblock %}
+{%- macro t(en, zh) %}{{ zh if lang == 'zh' and zh else en }}{% endmacro -%}
 
 {% block content %}
 
@@ -24,14 +25,15 @@
       <!-- Main content -->
       <div class="col-lg-8">
         {% if event.hero_image_url %}
-          <h1 class="section-title mb-1" style="font-size:2rem;">{{ event.title }}</h1>
+          <h1 class="section-title mb-1" style="font-size:2rem;">{{ t(event.title, event.title_zh) }}</h1>
         {% endif %}
 
-        {% if event.short_description %}
-          <p class="lead mb-4" style="color:var(--text-muted);">{{ event.short_description }}</p>
+        {% set short = t(event.short_description, event.short_description_zh) %}
+        {% if short %}
+          <p class="lead mb-4" style="color:var(--text-muted);">{{ short }}</p>
         {% endif %}
 
-        {% set desc = event.description_data %}
+        {% set desc = event.description_data_zh if lang == 'zh' and event.description_data_zh else event.description_data %}
         {% if desc %}
           <div class="mb-4" style="line-height:1.75;color:var(--text-dark);">
             {% if desc.intro %}
@@ -41,7 +43,9 @@
               <p>{{ desc.details }}</p>
             {% endif %}
             {% if desc.expect %}
-              <h5 style="color:var(--navy);font-weight:700;margin-top:1.25rem;">What to expect</h5>
+              <h5 style="color:var(--navy);font-weight:700;margin-top:1.25rem;">
+                {{ '活動內容' if lang == 'zh' else 'What to expect' }}
+              </h5>
               <ul style="padding-left:1.25rem;">
                 {% for item in desc.expect %}
                   <li style="margin-bottom:0.4rem;">{{ item }}</li>
@@ -59,15 +63,16 @@
         {% endif %}
 
         <!-- Reflection prompts -->
-        {% if event.reflection_prompts %}
+        {% set prompts = event.reflection_prompts_zh if lang == 'zh' and event.reflection_prompts_zh else event.reflection_prompts %}
+        {% if prompts %}
         <div class="mb-4">
-          <h5 style="color:var(--navy);font-weight:700;">💭 Reflection Prompts</h5>
+          <h5 style="color:var(--navy);font-weight:700;">💭 {{ '反思提示' if lang == 'zh' else 'Reflection Prompts' }}</h5>
           <p style="color:var(--text-muted);font-size:0.9rem;">
-            Think about these questions before and after attending. Use them in your journal entry.
+            {% if lang == 'zh' %}參加活動前後可以思考這些問題，並在日誌中作為寫作引導。{% else %}Think about these questions before and after attending. Use them in your journal entry.{% endif %}
           </p>
           <div class="prompt-list">
             <ol>
-              {% for prompt in event.reflection_prompts %}
+              {% for prompt in prompts %}
                 <li>{{ prompt }}</li>
               {% endfor %}
             </ol>
@@ -93,9 +98,9 @@
         <!-- Anonymous participant reflections -->
         {% if anon_reflections %}
         <div class="mb-4">
-          <h5 style="color:var(--navy);font-weight:700;">💬 What participants said</h5>
+          <h5 style="color:var(--navy);font-weight:700;">💬 {{ '學員心聲' if lang == 'zh' else 'What participants said' }}</h5>
           <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">
-            A few reflections shared anonymously by students who attended this event.
+            {% if lang == 'zh' %}以下是曾參加此活動的學員匿名分享的心得。{% else %}A few reflections shared anonymously by students who attended this event.{% endif %}
           </p>
           {% for r in anon_reflections %}
           <div style="background:var(--off-white);border-left:3px solid var(--coral);

@@ -1,5 +1,5 @@
 import random
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, abort, redirect, url_for, request, session
 from flask_login import current_user
 from models import Event, Page, Attendance, JournalEntry
 
@@ -49,3 +49,10 @@ def event_detail(event_id):
 def about():
     page = Page.query.filter_by(slug='about').first()
     return render_template('about.html', page=page)
+
+
+@public_bp.route('/lang/<lang>')
+def set_lang(lang):
+    if lang in ('en', 'zh'):
+        session['lang'] = lang
+    return redirect(request.referrer or url_for('public.home'))

@@ -5,8 +5,13 @@
 
 <section class="lize-hero" style="padding-bottom:2.5rem;">
   <div class="container-lg">
-    <h1>Programme Activities</h1>
-    <p class="hero-sub">Browse all Li-Ze Academy events for this semester.</p>
+    {% if lang == 'zh' %}
+      <h1>學期活動</h1>
+      <p class="hero-sub">瀏覽本學期所有麗澤書院活動。</p>
+    {% else %}
+      <h1>Programme Activities</h1>
+      <p class="hero-sub">Browse all Li-Ze Academy events for this semester.</p>
+    {% endif %}
   </div>
 </section>
 
@@ -39,8 +44,8 @@
               {% endif %}
             </div>
 
-            <h5 class="card-title">{{ event.title }}</h5>
-            <p class="card-text flex-grow-1">{{ event.short_description }}</p>
+            <h5 class="card-title">{{ event.title_zh if lang == 'zh' and event.title_zh else event.title }}</h5>
+            <p class="card-text flex-grow-1">{{ event.short_description_zh if lang == 'zh' and event.short_description_zh else event.short_description }}</p>
 
             {% if event.location %}
               <p class="mb-1" style="font-size:0.82rem;color:var(--text-muted);">
@@ -61,10 +66,10 @@
 
             <div class="d-flex gap-2 mt-3">
               <a href="{{ url_for('public.event_detail', event_id=event.id) }}"
-                 class="btn btn-lize flex-grow-1">Details</a>
+                 class="btn btn-lize flex-grow-1">{{ '詳細資訊' if lang == 'zh' else 'Details' }}</a>
               {% if event.registration_url %}
                 <a href="{{ event.registration_url }}" target="_blank" rel="noopener"
-                   class="btn btn-navy">Register</a>
+                   class="btn btn-navy">{{ '立即報名' if lang == 'zh' else 'Register' }}</a>
               {% endif %}
             </div>
           </div>

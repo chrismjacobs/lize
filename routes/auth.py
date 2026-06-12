@@ -11,14 +11,19 @@ def register():
         return redirect(url_for('student.dashboard'))
 
     if request.method == 'POST':
-        student_id  = request.form.get('student_id', '').strip()
-        email       = request.form.get('email', '').strip().lower()
-        name        = request.form.get('name', '').strip()
-        password    = request.form.get('password', '')
-        nationality = request.form.get('nationality', '').strip()
+        student_id       = request.form.get('student_id', '').strip()
+        email            = request.form.get('email', '').strip().lower()
+        name             = request.form.get('name', '').strip()
+        password         = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        nationality      = request.form.get('nationality', '').strip()
 
         if not student_id or not email or not name or not password:
             flash('Please fill in all required fields.', 'danger')
+            return render_template('auth/register.html')
+
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
             return render_template('auth/register.html')
 
         if not student_id.isdigit() or len(student_id) != 8:

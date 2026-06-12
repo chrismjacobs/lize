@@ -46,11 +46,18 @@
           <input type="text" name="title" class="form-control" value="{{ page.title }}">
         </div>
         <div class="mb-3">
-          <label class="form-label">Content</label>
+          <label class="form-label">Content (English)</label>
           <div id="quill-editor" style="background:#fff;border-radius:8px;"></div>
           <textarea name="content_html" id="content_html"
                     style="display:none;">{{ page.content_html or '' }}</textarea>
           <div class="form-text">Use the toolbar to format text. No HTML knowledge needed.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Content (中文版) <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+          <div id="quill-editor-zh" style="background:#fff;border-radius:8px;"></div>
+          <textarea name="content_html_zh" id="content_html_zh"
+                    style="display:none;">{{ page.content_html_zh or '' }}</textarea>
+          <div class="form-text">中文版內容（選填）。留空則公開頁面顯示英文版。</div>
         </div>
         <div class="mb-3">
           <label class="form-label">Page Image <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
@@ -88,12 +95,19 @@
   });
 
   const existing = document.getElementById('content_html').value.trim();
-  if (existing) {
-    quill.root.innerHTML = existing;
-  }
+  if (existing) quill.root.innerHTML = existing;
+
+  const quillZh = new Quill('#quill-editor-zh', {
+    theme: 'snow',
+    modules: { toolbar: [['bold','italic','underline'],[{'header':2},{'header':3}],[{'list':'ordered'},{'list':'bullet'}],['link'],['clean']] },
+    placeholder: '在此輸入中文版內容…'
+  });
+  const existingZh = document.getElementById('content_html_zh').value.trim();
+  if (existingZh) quillZh.root.innerHTML = existingZh;
 
   document.querySelector('form').addEventListener('submit', () => {
     document.getElementById('content_html').value = quill.root.innerHTML;
+    document.getElementById('content_html_zh').value = quillZh.root.innerHTML;
   });
 </script>
 {% endblock %}

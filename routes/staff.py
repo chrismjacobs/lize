@@ -112,6 +112,19 @@ def _save_event(event):
     prompts_raw = request.form.get('reflection_prompts', '')
     event.reflection_prompts = [p.strip() for p in prompts_raw.splitlines() if p.strip()]
 
+    # Chinese version (all optional)
+    event.title_zh = request.form.get('title_zh', '').strip() or None
+    event.short_description_zh = request.form.get('short_description_zh', '').strip() or None
+    zh_expect = [i.strip() for i in request.form.get('desc_expect_zh', '').splitlines() if i.strip()]
+    event.full_description_zh = json.dumps({
+        'intro':   request.form.get('desc_intro_zh', '').strip(),
+        'details': request.form.get('desc_details_zh', '').strip(),
+        'expect':  zh_expect,
+        'closing': request.form.get('desc_closing_zh', '').strip(),
+    }, ensure_ascii=False) if event.title_zh else None
+    prompts_zh_raw = request.form.get('reflection_prompts_zh', '')
+    event.reflection_prompts_zh = [p.strip() for p in prompts_zh_raw.splitlines() if p.strip()]
+
     # Hero image upload
     hero = request.files.get('hero_image')
     if hero and hero.filename:
@@ -238,6 +251,7 @@ def edit_page(slug):
     page = Page.query.filter_by(slug=slug).first_or_404()
     if request.method == 'POST':
         page.content_html = request.form.get('content_html', '')
+        page.content_html_zh = request.form.get('content_html_zh', '') or None
         page.title = request.form.get('title', page.title)
         page.last_updated_by = current_user.id
 

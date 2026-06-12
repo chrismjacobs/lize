@@ -35,12 +35,22 @@ def create_app():
     def health():
         return jsonify({'status': 'ok'})
 
+    @app.context_processor
+    def inject_lang():
+        from flask import session
+        return {'lang': session.get('lang', 'en')}
+
     # Migrations — safe to run on every startup; no-op if already applied
     with app.app_context():
-        db.create_all()  # creates any new tables (e.g. allowed_students)
+        db.create_all()
         for sql in [
             "ALTER TABLE journal_entries ADD COLUMN share_anonymous BOOLEAN DEFAULT FALSE",
             "ALTER TABLE users ADD COLUMN student_id VARCHAR(8)",
+            "ALTER TABLE events ADD COLUMN title_zh VARCHAR(200)",
+            "ALTER TABLE events ADD COLUMN short_description_zh TEXT",
+            "ALTER TABLE events ADD COLUMN full_description_zh TEXT",
+            "ALTER TABLE events ADD COLUMN reflection_prompts_zh TEXT",
+            "ALTER TABLE pages ADD COLUMN content_html_zh TEXT",
         ]:
             try:
                 db.session.execute(db.text(sql))

@@ -15,10 +15,10 @@
     <div class="row justify-content-center">
       <div class="col-lg-8">
         <div class="lize-card p-4 p-md-5">
-          {% if page and page.content_html %}
-            <div style="line-height:1.8;color:var(--text-dark);">
-              {{ page.content_html | safe }}
-            </div>
+          {% if lang == 'zh' and page and page.content_html_zh %}
+            <div style="line-height:1.8;color:var(--text-dark);">{{ page.content_html_zh | safe }}</div>
+          {% elif page and page.content_html %}
+            <div style="line-height:1.8;color:var(--text-dark);">{{ page.content_html | safe }}</div>
           {% else %}
             <h4>What is Li-Ze Academy?</h4>
             <p>Li-Ze Academy (麗澤書院) is an intercultural education programme at MCUT, Taiwan,

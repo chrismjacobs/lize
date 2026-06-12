@@ -10,11 +10,16 @@
          style="background:rgba(244,200,66,0.2);color:var(--gold);font-size:0.85rem;font-weight:600;">
       114學年下學期 · Spring Semester 2025
     </div>
-    <h1>Global Competence &<br><span class="hero-accent">Cross-Cultural Cognition</span></h1>
-    <p class="hero-sub">
-      Li-Ze Academy connects international and local students at MCUT through shared
-      experiences, reflective journalling, and genuine friendship.
-    </p>
+    {% if lang == 'zh' %}
+      <h1>全球競爭力與<br><span class="hero-accent">跨文化認知</span></h1>
+      <p class="hero-sub">麗澤書院透過共同體驗、反思日誌與真誠友誼，連結MCUT的國際學生與本地學生。</p>
+    {% else %}
+      <h1>Global Competence &<br><span class="hero-accent">Cross-Cultural Cognition</span></h1>
+      <p class="hero-sub">
+        Li-Ze Academy connects international and local students at MCUT through shared
+        experiences, reflective journalling, and genuine friendship.
+      </p>
+    {% endif %}
     {% if not current_user.is_authenticated %}
     <div class="d-flex flex-wrap gap-3 justify-content-center">
       <a href="{{ url_for('auth.register') }}" class="btn btn-lize btn-lg">Join the Programme</a>
@@ -28,14 +33,18 @@
   <div class="container-lg">
     <div class="row align-items-center g-5">
       <div class="col-md-6">
-        {% if page and page.content_html %}
+        {% if lang == 'zh' and page and page.content_html_zh %}
+          {{ page.content_html_zh | safe }}
+        {% elif page and page.content_html %}
           {{ page.content_html | safe }}
         {% else %}
           <p>The <strong>Li-Ze Academy</strong> (麗澤書院) is an intercultural programme run by the
           Office of International Affairs at MCUT, Taiwan, bringing together international and local
           students through shared experiences.</p>
         {% endif %}
-        <a href="{{ url_for('public.about') }}" class="btn btn-lize mt-2">Learn more</a>
+        <a href="{{ url_for('public.about') }}" class="btn btn-lize mt-2">
+          {{ '了解更多' if lang == 'zh' else 'Learn more' }}
+        </a>
       </div>
       <div class="col-md-6">
         <div class="row g-3">

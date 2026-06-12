@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ 'zh-TW' if lang == 'zh' else 'en' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,6 +52,17 @@
           <a class="nav-link {% if request.endpoint == 'public.about' %}active{% endif %}"
              href="{{ url_for('public.about') }}">About</a>
         </li>
+
+        {% if request.blueprint == 'public' %}
+          <li class="nav-item d-flex align-items-center gap-1 ms-1">
+            <a href="{{ url_for('public.set_lang', lang='en') }}"
+               class="btn btn-sm {% if lang != 'zh' %}btn-navy{% else %}btn-lize-outline{% endif %}"
+               style="font-size:0.75rem;padding:0.2rem 0.55rem;min-width:2rem;">EN</a>
+            <a href="{{ url_for('public.set_lang', lang='zh') }}"
+               class="btn btn-sm {% if lang == 'zh' %}btn-navy{% else %}btn-lize-outline{% endif %}"
+               style="font-size:0.75rem;padding:0.2rem 0.55rem;min-width:2.5rem;">中文</a>
+          </li>
+        {% endif %}
 
         {% if current_user.is_authenticated %}
           <li class="nav-item">

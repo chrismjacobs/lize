@@ -102,6 +102,52 @@
             </div>
           </div>
 
+          <!-- Chinese version (collapsible) -->
+          <div class="lize-card mb-4">
+            <div class="d-flex align-items-center justify-content-between p-4 pb-0"
+                 style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#zh-section">
+              <h5 style="color:var(--navy);font-weight:700;margin:0;">
+                中文版 <span style="font-weight:400;font-size:0.85rem;color:var(--text-muted);">Chinese Version (optional)</span>
+              </h5>
+              <span style="color:var(--text-muted);font-size:0.9rem;">▼</span>
+            </div>
+            <div id="zh-section" class="collapse p-4 pt-3 {{ 'show' if event and event.title_zh else '' }}">
+              <div class="mb-3">
+                <label class="form-label">Title 標題</label>
+                <input type="text" name="title_zh" class="form-control"
+                       value="{{ event.title_zh if event else '' }}" placeholder="活動中文標題">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Short Description 簡介</label>
+                <input type="text" name="short_description_zh" class="form-control"
+                       value="{{ event.short_description_zh if event else '' }}" placeholder="一句話說明活動內容">
+              </div>
+              {% set desc_zh = event.description_data_zh if event else none %}
+              <div class="mb-3">
+                <label class="form-label">Introduction 活動介紹</label>
+                <textarea name="desc_intro_zh" class="form-control" rows="3" placeholder="開場段落">{{ desc_zh.intro if desc_zh else '' }}</textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">More Details 詳細說明 <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <textarea name="desc_details_zh" class="form-control" rows="3" placeholder="補充內容">{{ desc_zh.details if desc_zh else '' }}</textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">What to Expect 活動內容 — 每行一個項目</label>
+                <textarea name="desc_expect_zh" class="form-control" rows="5"
+                          placeholder="在新北市本地家庭受到熱情歡迎&#10;一起享用家常台灣料理">{% if desc_zh and desc_zh.expect %}{{ desc_zh.expect | join('\n') }}{% endif %}</textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Closing Note 結語 <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <textarea name="desc_closing_zh" class="form-control" rows="2" placeholder="結語">{{ desc_zh.closing if desc_zh else '' }}</textarea>
+              </div>
+              <div class="mb-1">
+                <label class="form-label">Reflection Prompts 反思提示 — 每行一個問題</label>
+                <textarea name="reflection_prompts_zh" class="form-control" rows="4"
+                          placeholder="你對這次體驗有什麼感受？&#10;有什麼讓你感到驚訝？">{% if event %}{{ event.reflection_prompts_zh | join('\n') }}{% endif %}</textarea>
+              </div>
+            </div>
+          </div>
+
           <!-- Reflection prompts -->
           <div class="lize-card p-4 mb-4">
             <h5 style="color:var(--navy);font-weight:700;margin-bottom:0.5rem;">💭 Reflection Prompts</h5>
