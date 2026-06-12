@@ -28,10 +28,10 @@ def staff_required(f):
 def dashboard():
     events = Event.query.order_by(Event.date.desc()).all()
     students = User.query.filter_by(role='student').all()
-    all_entries = JournalEntry.query.all()
-    pending_photos = sum(
-        1 for e in all_entries for p in e.photos if p['visibility'] == 'pending'
-    )
+    pending_photos = JournalEntry.query.filter(
+        JournalEntry.share_anonymous == True,
+        JournalEntry.is_approved == None
+    ).count()
     total_entries = JournalEntry.query.count()
     total_checkins = Attendance.query.count()
     return render_template('staff/dashboard.html',
@@ -181,49 +181,39 @@ def delete_event(event_id):
     return redirect(url_for('staff.events'))
 
 
-# ── Photo Approval Queue ───────────────────────────────────────────────────────
+# ── Reflection Approval Queue ──────────────────────────────────────────────────
 
-@staff_bp.route('/photos')
+@staff_bp.route('/reflections')
 @login_required
 @staff_required
 def photo_queue():
-    # Build a flat list of pending individual photos across all entries
-    all_entries = (JournalEntry.query
-                   .order_by(JournalEntry.created_at.asc())
-                   .all())
-    pending = []
-    for entry in all_entries:
-        for idx, photo in enumerate(entry.photos):
-            if photo['visibility'] == 'pending':
-                pending.append({'entry': entry, 'photo': photo, 'index': idx})
+    pending = (JournalEntry.query
+               .filter(JournalEntry.share_anonymous == True,
+                       JournalEntry.is_approved == None)
+               .order_by(JournalEntry.created_at.asc())
+               .all())
     return render_template('staff/photo_queue.html', pending=pending)
 
 
-@staff_bp.route('/photos/<int:entry_id>/<int:photo_index>/approve', methods=['POST'])
+@staff_bp.route('/reflections/<int:entry_id>/approve', methods=['POST'])
 @login_required
 @staff_required
-def approve_photo(entry_id, photo_index):
+def approve_photo(entry_id):
     entry = JournalEntry.query.get_or_404(entry_id)
-    photos = entry.photos
-    if 0 <= photo_index < len(photos):
-        photos[photo_index]['visibility'] = 'approved'
-        entry.photos = photos
-        db.session.commit()
-        flash('Photo approved and added to event gallery.', 'success')
+    entry.is_approved = True
+    db.session.commit()
+    flash('Reflection approved — it will appear on the event page.', 'success')
     return redirect(url_for('staff.photo_queue'))
 
 
-@staff_bp.route('/photos/<int:entry_id>/<int:photo_index>/reject', methods=['POST'])
+@staff_bp.route('/reflections/<int:entry_id>/reject', methods=['POST'])
 @login_required
 @staff_required
-def reject_photo(entry_id, photo_index):
+def reject_photo(entry_id):
     entry = JournalEntry.query.get_or_404(entry_id)
-    photos = entry.photos
-    if 0 <= photo_index < len(photos):
-        photos[photo_index]['visibility'] = 'private'
-        entry.photos = photos
-        db.session.commit()
-        flash('Photo rejected — returned to student\'s private journal.', 'info')
+    entry.is_approved = False
+    db.session.commit()
+    flash('Reflection rejected — it stays private to the student.', 'info')
     return redirect(url_for('staff.photo_queue'))
 
 

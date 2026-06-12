@@ -52,6 +52,7 @@ def create_app():
             "ALTER TABLE events ADD COLUMN reflection_prompts_zh TEXT",
             "ALTER TABLE pages ADD COLUMN content_html_zh TEXT",
             "ALTER TABLE events ADD COLUMN enrolled_student_ids TEXT DEFAULT '[]'",
+            "ALTER TABLE journal_entries ADD COLUMN is_approved BOOLEAN",
         ]:
             try:
                 db.session.execute(db.text(sql))

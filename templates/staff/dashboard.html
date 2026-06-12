@@ -15,7 +15,7 @@
       <span class="icon">📅</span> Events
     </a>
     <a class="nav-link" href="{{ url_for('staff.photo_queue') }}">
-      <span class="icon">📸</span> Photo Queue
+      <span class="icon">📸</span> Sharing Queue
       {% if pending_photos %}
         <span class="badge rounded-pill ms-1"
               style="background:var(--coral);color:#fff;font-size:0.65rem;">{{ pending_photos }}</span>
@@ -74,7 +74,7 @@
           <div class="stat-icon" style="background:#fdf2f8;color:var(--coral);">📸</div>
           <div>
             <div class="stat-value">{{ pending_photos }}</div>
-            <div class="stat-label">Photos Pending</div>
+            <div class="stat-label">Awaiting Review</div>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@
       </div>
       <div class="col-md-4">
         <a href="{{ url_for('staff.photo_queue') }}" class="btn btn-navy w-100">
-          Review Photos {% if pending_photos %}({{ pending_photos }}){% endif %}
+          Review Reflections {% if pending_photos %}({{ pending_photos }}){% endif %}
         </a>
       </div>
       <div class="col-md-4">

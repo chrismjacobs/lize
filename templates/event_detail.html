@@ -80,13 +80,12 @@
         </div>
         {% endif %}
 
-        <!-- Photo gallery -->
-        {% set all_photos = event.gallery_images + event.approved_student_photos %}
-        {% if all_photos %}
+        <!-- Staff gallery images (uploaded directly to the event) -->
+        {% if event.gallery_images %}
         <div class="mb-4">
-          <h5 style="color:var(--navy);font-weight:700;">📸 Gallery</h5>
+          <h5 style="color:var(--navy);font-weight:700;">📸 {{ '活動相冊' if lang == 'zh' else 'Gallery' }}</h5>
           <div class="gallery-grid">
-            {% for url in all_photos %}
+            {% for url in event.gallery_images %}
               <a href="{{ url }}" target="_blank" rel="noopener">
                 <img src="{{ url }}" class="gallery-img" alt="Event photo">
               </a>
@@ -95,19 +94,30 @@
         </div>
         {% endif %}
 
-        <!-- Anonymous participant reflections -->
-        {% if anon_reflections %}
+        <!-- Approved student reflections (text + photos together) -->
+        {% if approved_reflections %}
         <div class="mb-4">
-          <h5 style="color:var(--navy);font-weight:700;">💬 {{ '學員心聲' if lang == 'zh' else 'What participants said' }}</h5>
+          <h5 style="color:var(--navy);font-weight:700;">💬 {{ '學員心聲' if lang == 'zh' else 'Student Reflections' }}</h5>
           <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">
-            {% if lang == 'zh' %}以下是曾參加此活動的學員匿名分享的心得。{% else %}A few reflections shared anonymously by students who attended this event.{% endif %}
+            {% if lang == 'zh' %}以下是曾參加此活動的學員匿名分享的心得。{% else %}Shared anonymously by students who attended this event.{% endif %}
           </p>
-          {% for r in anon_reflections %}
-          <div style="background:var(--off-white);border-left:3px solid var(--coral);
-                      border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:0.85rem;">
-            <p style="color:var(--text-dark);line-height:1.7;margin:0;font-style:italic;">
-              "{{ r.written_reflection }}"
-            </p>
+          {% for r in approved_reflections %}
+          <div style="background:var(--off-white);border:1.5px solid var(--border);
+                      border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;">
+            {% if r.written_reflection %}
+              <p style="color:var(--text-dark);line-height:1.75;margin-bottom:{% if r.photos %}0.85rem{% else %}0{% endif %};">
+                {{ r.written_reflection }}
+              </p>
+            {% endif %}
+            {% if r.photos %}
+              <div class="gallery-grid">
+                {% for photo in r.photos %}
+                  <a href="{{ photo.url }}" target="_blank" rel="noopener">
+                    <img src="{{ photo.url }}" class="gallery-img" alt="Reflection photo">
+                  </a>
+                {% endfor %}
+              </div>
+            {% endif %}
           </div>
           {% endfor %}
         </div>

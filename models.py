@@ -139,13 +139,9 @@ class Event(db.Model):
         return min(100, int((self.registered_count / self.capacity) * 100))
 
     @property
-    def approved_student_photos(self):
-        result = []
-        for entry in self.journal_entries:
-            for photo in entry.photos:
-                if photo['visibility'] == 'approved':
-                    result.append(photo['url'])
-        return result
+    def approved_reflections(self):
+        return [e for e in self.journal_entries
+                if e.share_anonymous and e.is_approved]
 
 
 class JournalEntry(db.Model):
@@ -160,6 +156,7 @@ class JournalEntry(db.Model):
     _photos = db.Column('photos', db.Text, default='[]')
     points_awarded = db.Column(db.Integer, default=0)
     share_anonymous = db.Column(db.Boolean, default=False)
+    is_approved = db.Column(db.Boolean, nullable=True)  # None=pending review, True=approved, False=rejected
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     @property

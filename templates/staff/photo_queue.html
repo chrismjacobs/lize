@@ -1,5 +1,5 @@
-﻿{% extends 'base.html' %}
-{% block title %}Photo Approval Queue{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Reflection Approval Queue{% endblock %}
 
 {% block content %}
 <div class="d-flex" style="min-height:calc(100vh - 56px);">
@@ -9,7 +9,7 @@
     <a class="nav-link" href="{{ url_for('staff.dashboard') }}"><span class="icon">📊</span> Dashboard</a>
     <div class="sidebar-section">Manage</div>
     <a class="nav-link" href="{{ url_for('staff.events') }}"><span class="icon">📅</span> Events</a>
-    <a class="nav-link active" href="{{ url_for('staff.photo_queue') }}"><span class="icon">📸</span> Photo Queue</a>
+    <a class="nav-link active" href="{{ url_for('staff.photo_queue') }}"><span class="icon">📋</span> Sharing Queue</a>
     <a class="nav-link" href="{{ url_for('staff.journals') }}"><span class="icon">📓</span> All Journals</a>
     <a class="nav-link" href="{{ url_for('staff.allowed_students') }}"><span class="icon">🎓</span> Student IDs</a>
     <div class="sidebar-section">Attendance</div>
@@ -20,52 +20,62 @@
   </nav>
 
   <main class="flex-grow-1 p-4">
-    <h3 style="color:var(--navy);font-weight:800;margin-bottom:0.5rem;">Photo Approval Queue</h3>
+    <h3 style="color:var(--navy);font-weight:800;margin-bottom:0.25rem;">Sharing Queue</h3>
     <p style="color:var(--text-muted);margin-bottom:1.5rem;">
-      Approve photos to add them to the public event gallery. Reject to keep them private.
+      Students who opted to share their reflection publicly. Approve to show it on the event page (text + photos together), or reject to keep it private.
     </p>
 
     {% if pending %}
-      <div class="row g-4">
-        {% for item in pending %}
-        <div class="col-md-6 col-lg-4">
-          <div class="lize-card overflow-hidden">
-            <img src="{{ item.photo.url }}" alt="Pending photo"
-                 style="width:100%;height:220px;object-fit:cover;">
-            <div class="p-3">
-              <div style="font-weight:700;color:var(--navy);">{{ item.entry.event.title }}</div>
-              <div style="font-size:0.83rem;color:var(--text-muted);">
-                By {{ item.entry.author.name }}
-                {% if item.entry.author.nationality %} ({{ item.entry.author.nationality }}){% endif %}
-                · {{ item.entry.created_at.strftime('%b %d') }}
-                {% if item.entry.photos | length > 1 %}
-                  · Photo {{ item.index + 1 }} of {{ item.entry.photos | length }}
-                {% endif %}
+      <div class="d-flex flex-column gap-4">
+        {% for entry in pending %}
+        <div class="lize-card overflow-hidden">
+          <div class="p-4 pb-3" style="border-bottom:1px solid var(--border);">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <div style="font-weight:700;color:var(--navy);font-size:1rem;">{{ entry.event.title }}</div>
+                <div style="font-size:0.83rem;color:var(--text-muted);">
+                  By {{ entry.author.name }}
+                  {% if entry.author.nationality %} · {{ entry.author.nationality }}{% endif %}
+                  · {{ entry.created_at.strftime('%b %d, %Y') }}
+                </div>
               </div>
-              {% if item.entry.written_reflection %}
-                <p style="font-size:0.85rem;color:var(--text-dark);margin-top:0.5rem;font-style:italic;">
-                  "{{ item.entry.written_reflection[:120] }}{% if item.entry.written_reflection | length > 120 %}…{% endif %}"
-                </p>
-              {% endif %}
-              <div class="d-flex gap-2 mt-2">
-                <form method="POST"
-                      action="{{ url_for('staff.approve_photo', entry_id=item.entry.id, photo_index=item.index) }}"
-                      style="flex:1;">
-                  <button type="submit" class="btn btn-sm w-100"
-                          style="background:var(--success);color:#fff;border:none;font-weight:600;">
+              <div class="d-flex gap-2">
+                <form method="POST" action="{{ url_for('staff.approve_photo', entry_id=entry.id) }}">
+                  <button type="submit" class="btn btn-sm"
+                          style="background:var(--success);color:#fff;border:none;font-weight:600;padding:0.35rem 1rem;">
                     ✓ Approve
                   </button>
                 </form>
-                <form method="POST"
-                      action="{{ url_for('staff.reject_photo', entry_id=item.entry.id, photo_index=item.index) }}"
-                      style="flex:1;">
-                  <button type="submit" class="btn btn-sm w-100"
-                          style="background:#fdf2f2;color:#e74c3c;border:none;font-weight:600;">
+                <form method="POST" action="{{ url_for('staff.reject_photo', entry_id=entry.id) }}">
+                  <button type="submit" class="btn btn-sm"
+                          style="background:#fdf2f2;color:#e74c3c;border:1.5px solid #f5c6c6;font-weight:600;padding:0.35rem 1rem;">
                     ✕ Reject
                   </button>
                 </form>
               </div>
             </div>
+          </div>
+
+          <div class="p-4">
+            {% if entry.written_reflection %}
+              <p style="color:var(--text-dark);line-height:1.75;margin-bottom:{% if entry.photos %}1rem{% else %}0{% endif %};">
+                {{ entry.written_reflection }}
+              </p>
+            {% endif %}
+
+            {% if entry.photos %}
+              <div class="gallery-grid">
+                {% for photo in entry.photos %}
+                  <a href="{{ photo.url }}" target="_blank" rel="noopener">
+                    <img src="{{ photo.url }}" class="gallery-img" alt="Reflection photo">
+                  </a>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if not entry.written_reflection and not entry.photos %}
+              <p style="color:var(--text-muted);font-style:italic;">No text or photos in this entry.</p>
+            {% endif %}
           </div>
         </div>
         {% endfor %}
@@ -75,7 +85,7 @@
            style="background:var(--white);border-radius:var(--radius);border:2px dashed var(--border);">
         <div style="font-size:3rem;">✅</div>
         <h5 style="color:var(--navy);">Queue is empty</h5>
-        <p style="color:var(--text-muted);">No photos are waiting for review right now.</p>
+        <p style="color:var(--text-muted);">No reflections are waiting for review right now.</p>
       </div>
     {% endif %}
   </main>

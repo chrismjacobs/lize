@@ -1,4 +1,3 @@
-import random
 from flask import Blueprint, render_template, abort, redirect, url_for, request, session
 from flask_login import current_user
 from models import Event, Page, Attendance, JournalEntry
@@ -29,20 +28,18 @@ def event_detail(event_id):
         user_attended = bool(Attendance.query.filter_by(
             user_id=current_user.id, event_id=event_id).first())
 
-    anon_reflections = (JournalEntry.query
+    approved_reflections = (JournalEntry.query
         .filter(
             JournalEntry.event_id == event_id,
             JournalEntry.share_anonymous == True,
-            JournalEntry.written_reflection != None,
-            JournalEntry.written_reflection != '',
+            JournalEntry.is_approved == True,
         )
+        .order_by(JournalEntry.created_at.desc())
         .all())
-    random.shuffle(anon_reflections)
-    anon_reflections = anon_reflections[:5]
 
     return render_template('event_detail.html', event=event,
                            user_attended=user_attended,
-                           anon_reflections=anon_reflections)
+                           approved_reflections=approved_reflections)
 
 
 @public_bp.route('/about')
